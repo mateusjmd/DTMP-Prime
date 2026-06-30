@@ -43,8 +43,8 @@ def reverse_seq(seq):
 def read_data_for_sl():
     """obtain the data in NBT for various types of Shallow Learning methods"""
 
-    data = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 1 (HT-training, test)',
-                         header=1)
+    #data = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
+    data = pd.read_excel('./DataSet/DTMP-Data-49300.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
     # data = df.loc[:, :]
 
     MAX_PBS = max(data["PBS length"])  # 17
@@ -84,8 +84,8 @@ def read_data_for_sl():
 def read_data_for_sl_position_and_type(flag='Position'):   #flag= Position or Type
     """obtain the data in NBT for various types of Shallow Learning methods"""
 
-    data = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 2 (Position, Type)',
-                         header=1)
+    #data = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 2 (Position, Type)', header=1)
+    df = pd.read_excel('./DataSet/DTMP-Data-49300.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
     data = data.replace('na', 0)
     # data = df.loc[:, :]
 
@@ -128,8 +128,8 @@ def read_data_for_sl_position_and_type(flag='Position'):   #flag= Position or Ty
 def read_data_for_rnn():
     """obtain the data in NBT for GRU"""
 
-    df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 1 (HT-training, test)',
-                       header=1)
+    #df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
+    df = pd.read_excel('./DataSet/DTMP-Data-49300.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
     # raw_data = df.iloc[:, [2, 4, 5, 26]]
     data = {'Target': [], 'RT': [], 'PBS': [], 'Other': [], 'Efficiency': []}
 
@@ -160,8 +160,8 @@ def read_data_for_rnn():
 def read_data_for_rnn_position_and_type(flag='Position'):
     """obtain the data in NBT for GRU"""
 
-    df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 2 (Position, Type)',
-                       header=1)
+    #df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 2 (Position, Type)', header=1)
+    df = pd.read_excel('./DataSet/DTMP-Data-49300.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
     df = df.replace('na', 0)
     # raw_data = df.iloc[:, [2, 4, 5, 26]]
     data = {'Target': [], 'RT': [], 'PBS': [], 'Other': [], 'Efficiency': []}
@@ -196,8 +196,8 @@ def read_data_for_rnn_position_and_type(flag='Position'):
 def read_data_of_for_transformer(max_len_Target=47, MAX_PBS=17, MAX_RT=20):
     """obtain the data in NBT for transformer"""
 
-    df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 1 (HT-training, test)',
-                       header=1)
+    #df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
+    df = pd.read_excel('./DataSet/DTMP-Data-49300.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
     # raw_data = df.iloc[:, [2, 4, 5, 26]]
     data = {'Target': [], 'RT': [], 'PBS': [], 'Efficiency': []}
     # data = {'Target': [], 'RT': [], 'PBS': [], 'Other': [], 'Efficiency': []}
@@ -231,8 +231,8 @@ def read_data_of_for_transformer(max_len_Target=47, MAX_PBS=17, MAX_RT=20):
 def read_data_for_transformer_position_and_type(flag='Position', max_len_Target=47, MAX_PBS=17, MAX_RT=20):   #flag= Position or Type
     """obtain the data in NBT for transformer"""
 
-    df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 2 (Position, Type)',
-                       header=1)
+    #df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 2 (Position, Type)', header=1)
+    df = pd.read_excel('./DataSet/DTMP-Data-49300.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
     df = df.replace('na', 0)
     # df.iloc[:, 10] = df.iloc[:, 10].replace('na', 48)
     # df.iloc[:, 12] = df.iloc[:, 12].replace('na', -7.2)
@@ -275,8 +275,8 @@ def read_data_for_transformer_position_and_type(flag='Position', max_len_Target=
 def read_data_of_for_transformer_order3(max_len_Target=47, MAX_PBS=17, MAX_RT=20):
     """obtain the data in NBT for transformer"""
 
-    df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 1 (HT-training, test)',
-                       header=1)
+    #df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
+    df = pd.read_excel('./DataSet/DTMP-Data-49300.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
     # raw_data = df.iloc[:, [2, 4, 5, 26]]
     data = {'Target': [], 'Target_o2': [], 'Target_o3': [], 'RT': [], 'RT_o2': [], 'RT_o3': [],
             'PBS': [], 'PBS_o2': [], 'PBS_o3': [], 'Efficiency': []}
@@ -344,7 +344,8 @@ def read_data_of_for_transformer_order3(max_len_Target=47, MAX_PBS=17, MAX_RT=20
 def read_data_for_transformer_position_and_type_order3(flag='Position', max_len_Target=47, MAX_PBS=17, MAX_RT=20):   #flag= Position or Type
     """obtain the data in NBT for transformer"""
 
-    df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 2 (Position, Type)', header=1)
+    #df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 2 (Position, Type)', header=1)
+    df = pd.read_excel('./DataSet/DTMP-Data-49300.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
     df = df.replace('na', 0)
     # df.iloc[:, 10] = df.iloc[:, 10].replace('na', 48)
     # df.iloc[:, 12] = df.iloc[:, 12].replace('na', -7.2)
