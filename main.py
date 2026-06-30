@@ -1,3 +1,9 @@
+# Adicionar no topo de main.py
+import yaml                          # usado em get_parameters()
+import pandas as pd                  # usado em main()
+from Utilite import *                # fasta2vcf, vcf2fasta, etc.
+from Target_mutation import *        # target_mutation class
+
 # Final model
 def print_parameters(myDict):
 	myGroup = {}
@@ -31,8 +37,8 @@ def get_parameters(config):
 	pre_defined_list["extend_length"] = 1000 # extracting +- 1000bp center at target pos from the genome, in 99.9% cases, you don't need to change this. If change to less than 500, will trigger fasta input mode, may cause error.
 	# introduction of pretrained models
 	# You can use DEEPPRIME.
-	pre_defined_list["PE2_model"] = p_dir+"../model/PE2_model_final.py"
-	pre_defined_list["PE3_model"] = p_dir+"../model/PE3_model_final.py"
+	pre_defined_list["PE2_model"] = p_dir+"../model/PE2_model_final.pkl"
+	pre_defined_list["PE3_model"] = p_dir+"../model/PE3_model_final.pkl"
 
 	#------------ PBS -----------
 	pre_defined_list["min_PBS_length"] = 10
@@ -57,6 +63,10 @@ def get_parameters(config):
 	pre_defined_list["max_max_ngRNA_distance"] = 200
 	pre_defined_list["search_iteration"] = 1 # not affect anything
 
+	# ---------- Transformer-based Model ----------
+	pre_defined_list["use_transformer"] = False
+	pre_defined_list["transformer_model"] = None
+
 	try:
 		with open(config, 'r') as f:
 			manifest_data = yaml.load(f,Loader=yaml.FullLoader)
@@ -70,6 +80,30 @@ def get_parameters(config):
 			parameters[p] = pre_defined_list[p]
 	return parameters
 
+
+import pandas as pd
+import yaml
+import importlib.util
+
+# ── Import módulos cujos nomes têm espaços (não importáveis via 'import') ──────
+def _load(name, rel_path):
+    """Importa um arquivo .py pelo path, contornando nomes com espaços."""
+    import importlib.util, os
+    base = os.path.dirname(os.path.realpath(__file__))
+    full = os.path.join(base, rel_path)
+    spec = importlib.util.spec_from_file_location(name, full)
+    mod  = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+_utilite = _load("Utilite", "Utilite.py")
+fasta2vcf      = _utilite.fasta2vcf
+vcf2fasta      = _utilite.vcf2fasta
+
+_tm = _load("target_mutation_mod", "Target_mutation.py")
+target_mutation = _tm.target_mutation
+
+#target_mutation.predict = _tm.predict
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -169,15 +203,15 @@ def main():
 	if df_top.shape[0]==0:
 		print ("no pegRNA were found for the input file: %s"%(args.input_file))
 		sys.exit()
-	df_top = df_top.sort_values("predicted_efficiency",ascending=False)
+	df_top = df_top.sort_values(by="predicted_efficiency", ascending=False)
 	df_top.to_csv("%s/topX_pegRNAs.csv"%(args.output),index=False)
 
 	df_all = pd.concat([x[1] for x in df_list])
-	df_all = df_all.sort_values("predicted_efficiency",ascending=False)
+	df_all = df_all.sort_values(by="predicted_efficiency", ascending=False)
 	df_all.to_csv("%s/rawX_pegRNAs.csv.gz"%(args.output),index=False,compression="gzip")
 
 	X_p = pd.concat([x[2] for x in df_list])
-	X_p = X_p.sort_values("predicted_efficiency",ascending=False)
+	X_p = X_p.sort_values(by="predicted_efficiency", ascending=False)
 	X_p.to_csv("%s/X_p_pegRNAs.csv.gz"%(args.output),index=True,compression="gzip")
 
 
