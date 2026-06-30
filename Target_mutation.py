@@ -1,3 +1,4 @@
+# -*- coding: latin-1 -*-
 import sys
 import subprocess
 import pickle
@@ -598,7 +599,7 @@ class target_mutation:
 
 			tensors = [[] for _ in range(9)]
 			for idx in self.X.index:
-				# rawX e self.X têm o mesmo índice — acessa sequências por idx
+				# rawX e self.X possuem o mesmo índice — acessa sequencias por idx
 				raw_row = self.rawX.loc[idx]
 				toks = build_input_from_rawX(raw_row, target_fa=self.target_fa)
 				for i in range(9):
@@ -606,7 +607,13 @@ class target_mutation:
 
 			with torch.no_grad():
 				batch = [torch.tensor(t, dtype=torch.long, device=device) for t in tensors]
-				scores = model(batch).squeeze(-1).cpu().tolist()
+				#scores = model(batch).squeeze(-1).cpu().tolist()
+				output = model(batch)
+
+				if isinstance(output, tuple):
+					output = output[0]
+
+				scores = output.squeeze(-1).detach().cpu().tolist()
 
 			myPred = pd.DataFrame({'predicted_efficiency': scores}, index=self.X.index)
 
