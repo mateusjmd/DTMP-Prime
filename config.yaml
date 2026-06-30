@@ -1,0 +1,13 @@
+genome_fasta: hg19.fa
+scaffold: GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGC
+n_jobs: 1
+debug: 0
+min_PBS_length: 10
+max_PBS_length: 15
+min_RTT_length: 10
+max_RTT_length: 20
+min_distance_RTT5: 5
+max_ngRNA_distance: 100
+sgRNA_length: 20
+offset: -3
+PAM: NGG
