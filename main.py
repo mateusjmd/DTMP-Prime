@@ -139,10 +139,12 @@ def run_steps(t,**kwargs):
 	t.init(**kwargs)
 	t.search(**kwargs)
 	t.predict(**kwargs)
+
+	# Temporariamente, antes do return em run_steps, adicione em main.py:
+	print("COLUNAS rawX:", t.rawX.columns.tolist())
+	print("topX shape:", t.topX.shape)
+	
 	return [t.topX,t.rawX,t.X_p,t.found_PE3b,t.found_PE3,t.found_dPAM,t.found_PE2,t.N_sgRNA_found]
-
-
-
 
 
 def main():
