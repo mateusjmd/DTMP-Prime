@@ -589,7 +589,8 @@ class target_mutation:
 
 		if use_transformer:
 			import torch
-			from tokenizer_order3 import build_input_from_rawX
+			#from tokenizer_order3 import build_input_from_rawX
+			from tokenizer_order3 import tokenize_row
 
 			device = 'cuda' if torch.cuda.is_available() else 'cpu'
 			#model = torch.load(transformer_model, map_location=device)
@@ -601,7 +602,8 @@ class target_mutation:
 			for idx in self.X.index:
 				# rawX e self.X possuem o mesmo índice — acessa sequencias por idx
 				raw_row = self.rawX.loc[idx]
-				toks = build_input_from_rawX(raw_row, target_fa=self.target_fa)
+				#toks = build_input_from_rawX(raw_row, target_fa=self.target_fa)
+				toks = tokenize_row(raw_row)
 				for i in range(9):
 					tensors[i].append(toks[i])
 
@@ -639,6 +641,15 @@ class target_mutation:
 		self.rawX['predicted_efficiency'] = myPred.loc[self.rawX.index]['predicted_efficiency']
 		self.X_p = self.X_p.sort_values("predicted_efficiency", ascending=False)
 		self.rawX = self.rawX.sort_values("predicted_efficiency", ascending=False)
+
+		if 'sgRNA_seq' in self.rawX.columns:
+			group_key = 'sgRNA_seq'
+		else:
+			group_key = self.rawX.columns[0]   # fallback
+
+		# Mantém o melhor de cada sgRNA (rawX já está ordenado por eficiência desc)
+		self.topX = self.rawX.drop_duplicates(subset=[group_key], keep='first').copy()
+		self.topX = self.topX.sort_values("predicted_efficiency", ascending=False)
 
 
 def run_sgRNA_search(s,**kwargs):
