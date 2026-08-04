@@ -1,4 +1,10 @@
+# -*- coding: latin-1 -*-
 # Evaluate
+import time
+import torch
+import pandas as pd
+import numpy as np
+from read_data import *
 
 def evaluate_sl(m, X_train, X_test, y_train, y_test):
     """calculate the pearson/spearman correlation coefficient for Shallow Learning methods"""
@@ -73,7 +79,8 @@ def evaluate_transformer(transformer, X_train, y_train, batch_size_test, device,
                      torch.tensor(list(xb["PBS"]), device=device, dtype=torch.long),
                      torch.tensor(list(xb["RT"]), device=device, dtype=torch.long))
             # torch.tensor(list(xb["Other"]), device=device, dtype=torch.float32))
-            output_b, att_weights_b = transformer(input)
+            #output_b, att_weights_b = transformer(input)
+            output_b, att_weights_b = transformer(input, other_features=None)
             output_b = output_b.squeeze(-1).cpu().numpy().tolist()
             outputs = outputs + output_b
 
@@ -129,8 +136,17 @@ def evaluate_transformer_order3(transformer, X_train, y_train, batch_size_test, 
                      torch.tensor(list(xb["Target_o3"]), device=device, dtype=torch.long),
                      torch.tensor(list(xb["PBS_o3"]), device=device, dtype=torch.long),
                      torch.tensor(list(xb["RT_o3"]), device=device, dtype=torch.long))
-            # torch.tensor(list(xb["Other"]), device=device, dtype=torch.float32))
-            output_b, att_weights_b = transformer(input)
+
+            other_feats = torch.tensor(list(xb["Other"]), device=device, dtype=torch.float32)
+            dnabert_emb = torch.tensor(list(xb["Dnabert"]), device=device, dtype=torch.float32)
+            enc_matrix = torch.tensor(list(xb["Encoding"]), device=device, dtype=torch.float32)
+
+            output_b, att_weights_b = transformer(input, other_features=other_feats, encoding_matrix=enc_matrix, dnabert_emb=dnabert_emb)
+            
+            # NOVO: tensor de features escalares
+            #other_feats = torch.tensor(list(xb["Other"]), device=device, dtype=torch.float32)
+            
+            #output_b, att_weights_b = transformer(input, other_features=other_feats)
             output_b = output_b.squeeze(-1).cpu().numpy().tolist()
             outputs = outputs + output_b
 
