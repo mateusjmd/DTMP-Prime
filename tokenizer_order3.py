@@ -1,5 +1,7 @@
 # tokenizer_order3.py — versão corrigida
 
+from wide_target import extract_wide_target
+
 _B = list('ACGT')
 CHAR2ID    = {c: i+1 for i, c in enumerate(_B)}
 CHAR2ID_O2 = {f'{a}{b}': i*4+j+1
@@ -30,13 +32,18 @@ def _tok3(seq, n):
     m = n - 2
     return (ids + [0] * m)[:m]
 
-def tokenize_row(raw_row):
+def tokenize_row(raw_row, target_fa):
     """
     raw_row: linha de self.rawX (tem PBS_seq, RTT_seq, sgRNA_seq)
     """
     pbs    = raw_row['PBS_seq']     # PBS em orientação pegRNA 5'?3'
     rt     = raw_row['RTT_seq']     # RTT em orientação pegRNA 5'?3'
-    target = raw_row['sgRNA_seq']   # spacer 20bp (padded a 47 via _tok1)
+    # Target = wide target 47bp reconstruída do genoma (não mais o spacer 20bp)
+    target = extract_wide_target(target_fa,
+                                 int(raw_row['cut_position']),
+                                 raw_row['strand'])
+    if target is None or len(target) != 47:
+        return None   # candidato de borda — sinaliza para pular
 
     return (
         _tok1(target, MAX_TARGET), _tok1(pbs, MAX_PBS), _tok1(rt, MAX_RT),
