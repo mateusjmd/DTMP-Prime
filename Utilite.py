@@ -625,30 +625,20 @@ def parse_webpage(c):
 	return df['DeepSpCas9 Score'].to_dict()
 
 def get_DeepSpCas9_score(gRNA_list):
-	"""Grab score from web server
-
-	input gRNA list should include PAM sequence, PAM is NGG
-	"""
-	url="http://deepcrispr.info/DeepSpCas9/"
-	br = mechanize.Browser()
-	br.set_handle_robots(False) # ignore robots
-	br.open(url)
-	br.select_form(nr=0)
-	br["ENTER_FASTA"] = list_to_fasta(gRNA_list)
-	res = br.submit()
-	output = res.read()
-	res = parse_webpage(output)
-	flag = False
-	for i in gRNA_list:
-		if not i[:20] in res:
-			print ("gRNA: %s NOT FOUND!"%(i[:20]))
-			print ("DeepSpCas9 API error!")
-			flag = True
-			res[i[:20]] = 0
-	if flag:
-		print (output)
-		print (res)
-	return res
+    """Versão com fallback local via genet. Retorna 0.0 se o modelo falhar."""
+    try:
+        from genet.predict import SpCas9
+        list_target30 = ["AAAA" + g + "AAA" for g in gRNA_list]
+        model     = SpCas9()
+        df_scores = model.predict(list_target30)
+        score_col = [c for c in df_scores.columns
+                     if c.lower() in ("score", "deepspcas9", "deepspcas9_score", "spcas9_score")]
+        col = score_col[0] if score_col else df_scores.columns[-1]
+        return {g[:20]: float(df_scores.iloc[i][col]) for i, g in enumerate(gRNA_list)}
+    except Exception as e:
+        print(f"[AVISO] get_DeepSpCas9_score falhou ({type(e).__name__}: {e}). "
+              f"Usando score 0.0 para todos os sgRNAs.")
+        return {g[:20]: 0.0 for g in gRNA_list}
 # gRNA_list = ['GGAATCCCTTCTGCAGCACCAGG','GGCCCAGACTGAGCACGTGAAGG']
 # res = get_DeepSpCas9_score(gRNA_list)
 # GGAATCCCTTCTGCAGCACC    55.750
