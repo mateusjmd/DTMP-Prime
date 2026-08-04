@@ -1,4 +1,4 @@
-genome_fasta: hg19.fa
+genome_fasta: hg38.fa
 scaffold: GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGC
 n_jobs: 1
 debug: 0
@@ -12,4 +12,13 @@ sgRNA_length: 20
 offset: -3
 PAM: NGG
 use_transformer: true
-transformer_model: /home/mateus25032/work/DTMP-Prime-FULL/Model_Trained/pegRNA_Transformer.pt
+
+# __________ MODELO DE PRODUÇÃO __________
+transformer_model: /home/mateus25032/work/DTMP-Prime-FULL/Model_Trained/pegRNA_Transformer_fase2a_(14_features).pt
+use_encoding: false
+feature_norm_path: /home/mateus25032/work/DTMP-Prime-FULL/feature_norms/feature_norm_cv.npz
+
+# __________ MODELO DE COMPLETUDE __________
+#transformer_model: /home/mateus25032/work/DTMP-Prime-FULL/Model_Trained/pegRNA_Transformer_fase3.pt
+#use_encoding: true
+#feature_norm_path: feature_norm_fase3.npz
