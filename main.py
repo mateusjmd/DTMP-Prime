@@ -1,3 +1,5 @@
+# -*- coding: latin-1 -*-
+
 # Adicionar no topo de main.py
 import yaml                          # usado em get_parameters()
 import pandas as pd                  # usado em main()
@@ -66,6 +68,10 @@ def get_parameters(config):
 	# ---------- Transformer-based Model ----------
 	pre_defined_list["use_transformer"] = False
 	pre_defined_list["transformer_model"] = None
+
+	# ---------- Produção ou Completude ---------
+	pre_defined_list["use_encoding"] = False
+	pre_defined_list["feature_norm_path"] = "feature_norm.npz"
 
 	try:
 		with open(config, 'r') as f:
