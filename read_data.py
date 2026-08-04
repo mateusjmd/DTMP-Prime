@@ -1,3 +1,5 @@
+# -*- coding: latin-1 -*-
+
 # Read New Date
 
 #!/usr/bin/env python3
@@ -193,39 +195,234 @@ def read_data_for_rnn_position_and_type(flag='Position'):
     return pd.DataFrame(data)
 
 
-def read_data_of_for_transformer(max_len_Target=47, MAX_PBS=17, MAX_RT=20):
-    """obtain the data in NBT for transformer"""
+#def read_data_of_for_transformer(max_len_Target=47, MAX_PBS=17, MAX_RT=20):
+#    """obtain the data in NBT for transformer"""
+#
+#    #df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
+#    df = pd.read_excel('./DataSet/DTMP-Data-49300.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
+#    # raw_data = df.iloc[:, [2, 4, 5, 26]]
+#    data = {'Target': [], 'RT': [], 'PBS': [], 'Efficiency': []}
+#    # data = {'Target': [], 'RT': [], 'PBS': [], 'Other': [], 'Efficiency': []}
+#
+#    MAX_PBS = max(MAX_PBS, max(df["PBS length"]))   # 17
+#    MAX_RT = max(MAX_RT, max(df["RT length"]))  # 20
+#    MAX_PBS_RT = max(df["PBS-RT length"])  # 37
+#
+#    print(f'Maximum length of (Target, PBS, RT, PBS+RT): ({max_len_Target}, {MAX_PBS}, {MAX_RT}, {MAX_PBS_RT})')
+#
+#    id2char = list('ACGT')
+#    char2id = {char: i+1 for i, char in enumerate(id2char)}
+#
+#    for i, row in df.iterrows():
+#        temp = [char2id[s] for s in list(row['3\' extension sequence of pegRNA'][:row["PBS length"]].upper())]
+#        for j in range(len(temp), MAX_PBS):
+#            # temp.insert(0, 0)
+#            temp.append(0)
+#        data['PBS'].append(temp)
+#        temp = [char2id[s] for s in list(row['3\' extension sequence of pegRNA'][row["PBS length"]:].upper())]
+#        for j in range(len(temp), MAX_RT):
+#            temp.append(0)
+#        data['RT'].append(temp)
+#        data['Efficiency'].append(row['Measured PE efficiency'] / 1)
+#        # data['Other'].append(list(row.iloc[list(range(5, 8)) + list(range(9, 26))]))
+#        data['Target'].append([char2id[s] for s in list(row.iloc[2].upper())])
+#
+#    return pd.DataFrame(data)
 
-    #df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
-    df = pd.read_excel('./DataSet/DTMP-Data-49300.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
-    # raw_data = df.iloc[:, [2, 4, 5, 26]]
-    data = {'Target': [], 'RT': [], 'PBS': [], 'Efficiency': []}
-    # data = {'Target': [], 'RT': [], 'PBS': [], 'Other': [], 'Efficiency': []}
+def read_data_transformer_split(max_len_Target=47, MAX_PBS=17, MAX_RT=20):
+    df = pd.read_excel('DataSet/Table-S5.xlsx',
+                       sheet_name='Library 1 (HT-training, test)', header=1)
 
-    MAX_PBS = max(MAX_PBS, max(df["PBS length"]))   # 17
-    MAX_RT = max(MAX_RT, max(df["RT length"]))  # 20
-    MAX_PBS_RT = max(df["PBS-RT length"])  # 37
+    split_col  = df.columns[0]   # 'Datat set name'
+    wide_col   = df.columns[1]
+    ext_col    = df.columns[3]
+    pbs_len_c  = df.columns[4]
+    rtt_len_c  = df.columns[5]
+    eff_col    = df.columns[25]  # 'Measured PE efficiency'
 
-    print(f'Maximum length of (Target, PBS, RT, PBS+RT): ({max_len_Target}, {MAX_PBS}, {MAX_RT}, {MAX_PBS_RT})')
+    df['Target'] = df[wide_col].str.upper()
+    assert (df['Target'].str.len() == 47).all(), "Wide target != 47bp"
+
+    def split_ext(row):
+        ext = str(row[ext_col]).upper()
+        rtt_len = int(row[rtt_len_c]); pbs_len = int(row[pbs_len_c])
+        return pd.Series({'RTT': ext[:rtt_len], 'PBS': ext[rtt_len:rtt_len+pbs_len]})
+    df[['RTT','PBS']] = df.apply(split_ext, axis=1)
+    df['Efficiency'] = df[eff_col].astype(float)
+
+    train = df[df[split_col] == 'HT-Training'][['Target','PBS','RTT','Efficiency']]
+    test  = df[df[split_col] == 'HT-Test'][['Target','PBS','RTT','Efficiency']]
+    return train.reset_index(drop=True), test.reset_index(drop=True)
+
+#FEATURE_COLS_IDX = list(range(8, 25))   # as 17 features
+
+#def read_data_transformer_features(save_norm_path='feature_norm.npz'):
+#    import numpy as np
+#    df = pd.read_excel('Table-S5.xlsx',
+#                       sheet_name='Library 1 (HT-training, test)', header=1)
+#
+#    split_col = df.columns[0]
+#    wide_col  = df.columns[1]
+#    ext_col   = df.columns[3]
+#    pbs_len_c = df.columns[4]
+#    rtt_len_c = df.columns[5]
+#    eff_col   = df.columns[25]
+#    feat_cols = [df.columns[i] for i in FEATURE_COLS_IDX]
+#
+#    df['Target'] = df[wide_col].str.upper()
+#    assert (df['Target'].str.len() == 47).all()
+#
+#    def split_ext(row):
+#        ext = str(row[ext_col]).upper()
+#        rl = int(row[rtt_len_c]); pl = int(row[pbs_len_c])
+#        return pd.Series({'RTT': ext[:rl], 'PBS': ext[rl:rl+pl]})
+#    df[['RTT','PBS']] = df.apply(split_ext, axis=1)
+#    df['Efficiency'] = df[eff_col].astype(float)
+#
+#    train = df[df[split_col] == 'HT-Training'].reset_index(drop=True)
+#    test  = df[df[split_col] == 'HT-Test'].reset_index(drop=True)
+#
+#    # -- Normalização: stats SÓ do treino --------------------------
+#    feat_mean = train[feat_cols].mean().values
+#    feat_std  = train[feat_cols].std().values
+#    feat_std[feat_std == 0] = 1.0   # evita divisão por zero
+#
+#    # salva para reuso na inferência — CRÍTICO
+#    np.savez(save_norm_path, mean=feat_mean, std=feat_std,
+#             cols=[c.split('\\n')[0].strip() for c in feat_cols])
+#
+#    def norm_feats(sub):
+#        return ((sub[feat_cols].values - feat_mean) / feat_std).astype('float32')
+#
+#    train_feats = norm_feats(train)
+#    test_feats  = norm_feats(test)
+#
+#    return (train[['Target','PBS','RTT','Efficiency']], train_feats,
+#               test[['Target','PBS','RTT','Efficiency']],  test_feats)
+
+# Read_New_Date.py — nova função para Fase 2a
+def read_data_transformer_order3_features(max_len_Target=47, MAX_PBS=17, MAX_RT=20,
+                                         save_norm_path='feature_norm.npz', dnabert_npy='dnabert_embeddings.npy',
+                                         dnabert_path='/home/mateus25032/work/DNABERT/DNA_bert_6', dnabert_finetune=False):
+    """
+    Carrega Table-S5 para treino do Transformer COM as 17 features escalares.
+    Correções vs original:
+      - Target usa iloc[1] (Wide 47bp), NÃO iloc[2] (Guide 20bp)  [Fase 1]
+      - Coluna 'Other' com 17 features z-score (stats só do HT-Training)  [Fase 2]
+      - Retorna treino/teste separados pelo split nativo  [Fase 5]
+    """
+    import numpy as np
+    from alignment_73 import encode_candidate
+    from dnabert_embed import seq_to_kmers
+
+    df = pd.read_excel('DataSet/Table-S5.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
+    # -- NOVO: cria o tokenizer uma vez, se for fine-tune --
+    tokenizer = None
+    if dnabert_finetune:
+        from transformers import BertTokenizer
+        tokenizer = BertTokenizer.from_pretrained(dnabert_path)
+
+    # -- NOVO Fase 4: carrega os embeddings pré-computados --
+    dnabert_emb = np.load(dnabert_npy)   # (43149, 768), mesma ordem do df
+    assert len(dnabert_emb) == len(df), \
+        f"Embeddings ({len(dnabert_emb)}) != registros ({len(df)})"
+
+    # IMPORTANTE: guarda a posição original ANTES de qualquer filtragem/split,
+    # para indexar o .npy corretamente
+    df = df.reset_index(drop=True)
+    df['_orig_pos'] = range(len(df))   # posição no .npy
+
+    split_col = df.columns[0]      # 'Datat set name'
+    #FEAT_IDX  = list(range(8, 25)) # as 17 features
+    FEAT_IDX = [8, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+    feat_cols = [df.columns[i] for i in FEAT_IDX]
+
+    MAX_PBS = max(MAX_PBS, max(df["PBS length"]))
+    MAX_RT  = max(MAX_RT,  max(df["RT length"]))
 
     id2char = list('ACGT')
-    char2id = {char: i+1 for i, char in enumerate(id2char)}
+    char2id    = {c: i+1 for i, c in enumerate(id2char)}
+    char2id_o2 = {f'{a}{b}': i*4 + j + 1
+                  for i,a in enumerate(id2char) for j,b in enumerate(id2char)}
+    char2id_o3 = {f'{a}{b}{c}': i*16 + j*4 + k + 1
+                  for i,a in enumerate(id2char) for j,b in enumerate(id2char)
+                  for k,c in enumerate(id2char)}
 
-    for i, row in df.iterrows():
-        temp = [char2id[s] for s in list(row['3\' extension sequence of pegRNA'][:row["PBS length"]].upper())]
-        for j in range(len(temp), MAX_PBS):
-            # temp.insert(0, 0)
-            temp.append(0)
-        data['PBS'].append(temp)
-        temp = [char2id[s] for s in list(row['3\' extension sequence of pegRNA'][row["PBS length"]:].upper())]
-        for j in range(len(temp), MAX_RT):
-            temp.append(0)
-        data['RT'].append(temp)
-        data['Efficiency'].append(row['Measured PE efficiency'] / 1)
-        # data['Other'].append(list(row.iloc[list(range(5, 8)) + list(range(9, 26))]))
-        data['Target'].append([char2id[s] for s in list(row.iloc[2].upper())])
+    # -- Normalização: média/desvio SÓ do HT-Training ------------------
+    train_mask = df[split_col] == 'HT-Training'
+    feat_mean = df.loc[train_mask, feat_cols].mean().values
+    feat_std  = df.loc[train_mask, feat_cols].std().values
+    feat_std[feat_std == 0] = 1.0
+    np.savez(save_norm_path, mean=feat_mean, std=feat_std,
+             cols=[c.split('\n')[0].strip() for c in feat_cols])
 
-    return pd.DataFrame(data)
+    def build_split(sub_df):
+        data = {'Target': [], 'Target_o2': [], 'Target_o3': [],
+                'RT': [], 'RT_o2': [], 'RT_o3': [],
+                'PBS': [], 'PBS_o2': [], 'PBS_o3': [],
+                'Other': [], 'Efficiency': [], 'Encoding': [], 'Dnabert': [], 'Dnabert_ids': [], 'Dnabert_mask': []}
+
+        for _, row in sub_df.iterrows():
+            ext = str(row["3' extension sequence of pegRNA"]).upper()
+            pbs_len = int(row["PBS length"])
+            # variáveis explícitas e persistentes:
+            pbs = ext[:pbs_len]
+            rtt = ext[pbs_len:]
+
+            # -- PBS (usa 'pbs') --
+            t = [char2id[pbs[j]] for j in range(len(pbs))]
+            t += [0]*(MAX_PBS - len(t));                 data['PBS'].append(t)
+            t = [char2id_o2[pbs[j:j+2]] for j in range(len(pbs)-1)]
+            t += [0]*(MAX_PBS-1 - len(t));               data['PBS_o2'].append(t)
+            t = [char2id_o3[pbs[j:j+3]] for j in range(len(pbs)-2)]
+            t += [0]*(MAX_PBS-2 - len(t));               data['PBS_o3'].append(t)
+
+            # -- RT (usa 'rtt') --
+            t = [char2id[rtt[j]] for j in range(len(rtt))]
+            t += [0]*(MAX_RT - len(t));                  data['RT'].append(t)
+            t = [char2id_o2[rtt[j:j+2]] for j in range(len(rtt)-1)]
+            t += [0]*(MAX_RT-1 - len(t));                data['RT_o2'].append(t)
+            t = [char2id_o3[rtt[j:j+3]] for j in range(len(rtt)-2)]
+            t += [0]*(MAX_RT-2 - len(t));                data['RT_o3'].append(t)
+
+            # -- Target: wide 47bp (Fase 1) --
+            wide_target = row.iloc[1].upper()
+            assert len(wide_target) == 47
+            data['Target'].append([char2id[wide_target[j]] for j in range(len(wide_target))])
+            data['Target_o2'].append([char2id_o2[wide_target[j:j+2]] for j in range(len(wide_target)-1)])
+            data['Target_o3'].append([char2id_o3[wide_target[j:j+3]] for j in range(len(wide_target)-2)])
+
+            # -- Other: 14 features (Fase 2) --
+            raw_feats = row[feat_cols].values.astype(float)
+            data['Other'].append(((raw_feats - feat_mean) / feat_std).tolist())
+
+            # -- Encoding: matriz 8x73 (Fase 3) --  ? agora pbs, rtt e wide_target existem
+            enc_matrix = encode_candidate(wide_target, pbs, rtt)
+            data['Encoding'].append(enc_matrix.tolist())
+
+            # -- NOVO Fase 4: embedding pré-computado desta linha --
+            orig_pos = int(row['_orig_pos'])
+            data['Dnabert'].append(dnabert_emb[orig_pos].tolist())
+
+            if dnabert_finetune:
+                from dnabert_embed import seq_to_kmers
+                kmers = seq_to_kmers(wide_target)
+                encoded = tokenizer.batch_encode_plus(
+                    [kmers], add_special_tokens=True,
+                    max_length=64, pad_to_max_length=True, return_tensors='pt')
+                data['Dnabert_ids'].append(encoded['input_ids'][0].tolist())
+                data['Dnabert_mask'].append(encoded['attention_mask'][0].tolist())
+
+            data['Efficiency'].append(row['Measured PE efficiency'])
+
+        #for k, v in data.items():
+        #    print(f"  {k}: {len(v)}")
+        return pd.DataFrame(data)
+
+    train_df = build_split(df[train_mask])
+    test_df  = build_split(df[df[split_col] == 'HT-Test'])
+    print(f"Fase 2a — treino: {len(train_df)}, teste: {len(test_df)}, features: {len(feat_cols)}")
+    return train_df, test_df
 
 
 def read_data_for_transformer_position_and_type(flag='Position', max_len_Target=47, MAX_PBS=17, MAX_RT=20):   #flag= Position or Type
@@ -273,72 +470,35 @@ def read_data_for_transformer_position_and_type(flag='Position', max_len_Target=
 
 
 def read_data_of_for_transformer_order3(max_len_Target=47, MAX_PBS=17, MAX_RT=20):
-    """obtain the data in NBT for transformer"""
+    df = pd.read_excel('DataSet/Table-S5.xlsx',
+                       sheet_name='Library 1 (HT-training, test)', header=1)
 
-    #df = pd.read_excel('../Supplementary Table 4.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
-    df = pd.read_excel('./DataSet/DTMP-Data-49300.xlsx', sheet_name='Library 1 (HT-training, test)', header=1)
-    # raw_data = df.iloc[:, [2, 4, 5, 26]]
-    data = {'Target': [], 'Target_o2': [], 'Target_o3': [], 'RT': [], 'RT_o2': [], 'RT_o3': [],
-            'PBS': [], 'PBS_o2': [], 'PBS_o3': [], 'Efficiency': []}
-    # data = {'Target': [], 'RT': [], 'PBS': [], 'Other': [], 'Efficiency': []}
+    # Nomes reais das colunas (por índice, pois têm quebras de linha nos headers)
+    wide_col   = df.columns[1]   # Wide target sequence (47bp)
+    ext_col    = df.columns[3]   # 3' extension of pegRNA (PBS+RTT)
+    pbs_len_col = df.columns[4]  # PBS length
+    rtt_len_col = df.columns[5]  # RTT length
+    eff_col    = df.columns[-1]  # Measured PE efficiency (confirmar índice)
 
-    MAX_PBS = max(MAX_PBS, max(df["PBS length"]))   # 17
-    MAX_RT = max(MAX_RT, max(df["RT length"]))  # 20
-    MAX_PBS_RT = max(df["PBS-RT length"])  # 37
+    df['Target'] = df[wide_col].str.upper()   # ? já é 47bp, uso direto
+    assert (df['Target'].str.len() == 47).all(), \
+        f"Wide target não tem 47bp em todos os registros! " \
+        f"Encontrados comprimentos: {df['Target'].str.len().unique()}" 
 
-    print(f'Maximum length of (Target, PBS, RT, PBS+RT): ({max_len_Target}, {MAX_PBS}, {MAX_RT}, {MAX_PBS_RT})')
+    # Decompor a 3' extension em PBS e RTT usando os comprimentos tabelados
+    # A 3' extension é [RTT][PBS] na orientação 5'?3' do pegRNA
+    def split_ext(row):
+        ext = str(row[ext_col]).upper()
+        pbs_len = int(row[pbs_len_col])
+        rtt_len = int(row[rtt_len_col])
+        rtt = ext[:rtt_len]
+        pbs = ext[rtt_len:rtt_len + pbs_len]
+        return pd.Series({'RTT': rtt, 'PBS': pbs})
 
-    id2char = list('ACGT')
-    char2id = {char: i+1 for i, char in enumerate(id2char)}
-    char2id_o2 = {f'{char}{char_j}': i * len(id2char) + j + 1
-                  for i, char in enumerate(id2char) for j, char_j in enumerate(id2char)}
-    char2id_o3 = {f'{char}{char_j}{char_k}': i * len(id2char) * len(id2char) + j * len(id2char) + k + 1
-                  for i, char in enumerate(id2char) for j, char_j in enumerate(id2char) for k, char_k in enumerate(id2char)}
+    df[['RTT','PBS']] = df.apply(split_ext, axis=1)
+    df['Efficiency'] = df[eff_col].astype(float)
 
-    for i, row in df.iterrows():
-        seq = row['3\' extension sequence of pegRNA'][:row["PBS length"]].upper()
-        temp = [char2id[seq[j]] for j in range(0, len(seq))]
-        for j in range(len(temp), MAX_PBS):
-            # temp.insert(0, 0)
-            temp.append(0)
-        data['PBS'].append(temp)
-        temp = [char2id_o2[seq[j:j+2]] for j in range(0, len(seq)-1)]
-        for j in range(len(temp), MAX_PBS-1):
-            # temp.insert(0, 0)
-            temp.append(0)
-        data['PBS_o2'].append(temp)
-        temp = [char2id_o3[seq[j:j + 3]] for j in range(0, len(seq) - 2)]
-        for j in range(len(temp), MAX_PBS - 2):
-            # temp.insert(0, 0)
-            temp.append(0)
-        data['PBS_o3'].append(temp)
-
-        seq = row['3\' extension sequence of pegRNA'][row["PBS length"]:].upper()
-        temp = [char2id[seq[j]] for j in range(0, len(seq))]
-        for j in range(len(temp), MAX_RT):
-            temp.append(0)
-        data['RT'].append(temp)
-        temp = [char2id_o2[seq[j:j + 2]] for j in range(0, len(seq) - 1)]
-        for j in range(len(temp), MAX_RT - 1):
-            # temp.insert(0, 0)
-            temp.append(0)
-        data['RT_o2'].append(temp)
-        temp = [char2id_o3[seq[j:j + 3]] for j in range(0, len(seq) - 2)]
-        for j in range(len(temp), MAX_RT - 2):
-            # temp.insert(0, 0)
-            temp.append(0)
-        data['RT_o3'].append(temp)
-
-        seq = row.iloc[2].upper()
-        data['Target'].append([char2id[seq[j]] for j in range(0, len(seq))])
-        data['Target_o2'].append([char2id_o2[seq[j:j + 2]] for j in range(0, len(seq) - 1)])
-        data['Target_o3'].append([char2id_o3[seq[j:j + 3]] for j in range(0, len(seq) - 2)])
-
-        data['Efficiency'].append(row['Measured PE efficiency'] / 1)
-        # data['Other'].append(list(row.iloc[list(range(5, 8)) + list(range(9, 26))]))
-        # data['Target'].append([char2id[s] for s in list(row.iloc[2].upper())])
-
-    return pd.DataFrame(data)
+    return df[['Target','PBS','RTT','Efficiency']]
 
 
 def read_data_for_transformer_position_and_type_order3(flag='Position', max_len_Target=47, MAX_PBS=17, MAX_RT=20):   #flag= Position or Type
