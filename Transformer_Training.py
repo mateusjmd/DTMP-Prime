@@ -42,6 +42,7 @@ hyperparameters = {
     'transfer':           False,
     'freezing':           False,
     'device':             device,
+    'other_size':         17
 }
 
 # -- 4. Treinar -----------------------------------------------------------
