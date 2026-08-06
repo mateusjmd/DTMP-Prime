@@ -1,30 +1,57 @@
 #!/usr/bin/env python3
 """
-DTMP-Prime Web Interface — Flask Backend
-
-Coloque este arquivo no mesmo diretório que main.py.
-
-Dependências:
-  pip install flask pandas pyyaml
+DTMP-Prime Web Interface — backend Flask.
 
 Uso:
-  cd /caminho/para/DTMP-Prime
-  python app.py
+  python -m web.app        (a partir da raiz do repositório)
+  # ou: python web/app.py
   # Abre em http://localhost:5000
+
+Dependências: flask, pandas, pyyaml (ver requirements.txt).
 """
-import os, json, uuid, time, threading, subprocess
+import os, sys, json, uuid, time, threading, subprocess
 from pathlib import Path
 from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory, abort
 
-WORK_DIR = Path(__file__).parent.resolve()
-JOBS_DIR = WORK_DIR / ".dtmp_jobs"
+# Permite executar diretamente (python web/app.py) além de python -m web.app
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import yaml
+
+from dtmp_prime import paths
+
+# WEB_DIR: onde vive o frontend.html. ROOT: raiz do repositório, que é o
+# diretório de trabalho correto para o subprocesso do pipeline.
+# Antes, WORK_DIR era o diretório de web/ e servia para as duas coisas: o
+# comando montado apontava para web/main.py (inexistente) e o cwd do
+# subprocesso fazia todos os caminhos relativos resolverem contra web/.
+WEB_DIR = Path(__file__).parent.resolve()
+ROOT = paths.ROOT
+JOBS_DIR = ROOT / ".dtmp_jobs"
 JOBS_DIR.mkdir(exist_ok=True)
 
 app = Flask(__name__)
 app.config["JSON_AS_ASCII"] = False          # preserva acentos no JSON
 _jobs: dict = {}
 _lock = threading.Lock()
+
+
+# ── Configuração ──────────────────────────────────────────────────────────────
+
+def _base_config() -> dict:
+    """Lê o config.yaml da raiz como base do config de cada job.
+
+    É o que garante que a escolha de modelo (Produção x Completude) feita no
+    config.yaml valha também para as execuções disparadas pela interface.
+    """
+    try:
+        with open(paths.DEFAULT_CONFIG, "r", encoding="utf-8") as fh:
+            return yaml.load(fh, Loader=yaml.FullLoader) or {}
+    except FileNotFoundError:
+        return {}
+    except yaml.YAMLError:
+        return {}
 
 
 # ── Pipeline runner (thread separada) ─────────────────────────────────────────
@@ -34,8 +61,11 @@ def _run(jid: str, inp: Path, cfg: Path, out: Path) -> None:
     job["status"] = "running"
     job["started"] = datetime.now().isoformat()
 
+    # Invoca o pacote como módulo: main.py usa imports relativos e não pode
+    # mais ser executado por caminho. sys.executable garante o mesmo interpretador
+    # (e o mesmo ambiente virtual) que roda o Flask.
     cmd = [
-        "python", str(WORK_DIR / "main.py"),
+        sys.executable, "-m", "dtmp_prime.main",
         "-f", str(inp), "-c", str(cfg), "-o", str(out),
     ]
 
@@ -44,9 +74,13 @@ def _run(jid: str, inp: Path, cfg: Path, out: Path) -> None:
 
     try:
         log("$ " + " ".join(str(x) for x in cmd))
+        env = dict(os.environ)
+        env["PYTHONUNBUFFERED"] = "1"          # logs em tempo real no painel
+        env["PYTHONIOENCODING"] = "utf-8"
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, bufsize=1, cwd=str(WORK_DIR),
+            text=True, encoding="utf-8", errors="replace", bufsize=1,
+            cwd=str(ROOT), env=env,
         )
         for line in iter(proc.stdout.readline, ""):
             log(line.rstrip("\n"))
@@ -62,11 +96,35 @@ def _run(jid: str, inp: Path, cfg: Path, out: Path) -> None:
     job["ended"] = datetime.now().isoformat()
 
 
+# ── Serialização segura ───────────────────────────────────────────────────────
+
+def _json_safe(obj):
+    """Converte NaN/Inf e tipos numpy para algo que JSON.parse aceite.
+
+    ``df.where(pd.notnull, None)`` não basta: em colunas float o pandas converte
+    o None de volta para NaN, e o jsonify emite o token literal ``NaN``, que o
+    JSON.parse do navegador rejeita — quebrando a página inteira, não só a célula.
+    """
+    import math
+    if isinstance(obj, dict):
+        return {str(k): _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_json_safe(v) for v in obj]
+    if isinstance(obj, float):
+        return None if (math.isnan(obj) or math.isinf(obj)) else obj
+    if hasattr(obj, "item"):          # escalares numpy
+        try:
+            return _json_safe(obj.item())
+        except Exception:
+            return str(obj)
+    return obj
+
+
 # ── Rotas ──────────────────────────────────────────────────────────────────────
 
 @app.route("/")
 def index():
-    resp = send_from_directory(str(WORK_DIR), "frontend.html")
+    resp = send_from_directory(str(WEB_DIR), "frontend.html")
     resp.headers["Content-Type"] = "text/html; charset=utf-8"
     return resp
 
@@ -101,15 +159,20 @@ def api_run():
                 fh.write(f">{name}_alt\n{v['alt'].strip()}\n")
 
     # ─ Salvar config ─
-    import yaml
     def fi(k, d):
         raw = request.form.get(k, str(d))
         try: return int(raw)
         except: return d
 
-    cfg_data = {
-        "genome_fasta":        request.form.get("genome_fasta", ""),
-        "scaffold":            "GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGC",
+    # Parte do config.yaml da raiz como BASE. Antes o config do job era montado
+    # do zero e não continha use_transformer / transformer_model / use_encoding /
+    # feature_norm_path — como o default de use_transformer é False, TODA execução
+    # pela web caía no ramo XGBoost e procurava um .pkl inexistente.
+    cfg_data = _base_config()
+    cfg_data.update({
+        "scaffold":            cfg_data.get(
+            "scaffold",
+            "GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGC"),
         "n_jobs":              fi("n_jobs", 4),
         "debug":               max(1, fi("debug", 6)),   # mínimo 1 obrigatório
         "min_PBS_length":      fi("min_PBS_length", 10),
@@ -123,10 +186,16 @@ def api_run():
         "PAM":                 request.form.get("PAM", "NGG"),
         "gRNA_search_space":   fi("gRNA_search_space", 200),
         "max_target_to_sgRNA": fi("max_target_to_sgRNA", 10),
-    }
+    })
+
+    # Genoma: o campo do formulário só sobrescreve a base se vier preenchido.
+    genome = request.form.get("genome_fasta", "").strip()
+    if genome:
+        cfg_data["genome_fasta"] = genome
+
     cfg_path = jdir / "config.yaml"
-    with open(cfg_path, "w") as fh:
-        yaml.dump(cfg_data, fh, default_flow_style=False)
+    with open(cfg_path, "w", encoding="utf-8") as fh:
+        yaml.dump(cfg_data, fh, default_flow_style=False, allow_unicode=True)
 
     with _lock:
         _jobs[jid] = {
@@ -216,7 +285,7 @@ def api_results(jid):
             df2 = pd.read_csv(summs[0], index_col=0).where(pd.notnull, None)
             data["summary"] = df2.to_dict(orient="index")
 
-        return jsonify(data)
+        return jsonify(_json_safe(data))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
