@@ -1,25 +1,27 @@
-# -*- coding: latin-1 -*-
 #!/usr/bin/env python3
 """
-Fase 4 ó ExtraÁ„o de embeddings do DNABERT-6 (congelado, Abordagem 1).
+Fase 4 ¬ó Extra√ß√£o de embeddings do DNABERT-6 (congelado, Abordagem 1).
 
 API do transformers 2.5 (empacotado pelo DNABERT):
-  - tokenizaÁ„o via batch_encode_plus (n„o tok(...))
-  - saÌda do modelo È TUPLA: out[0] = last_hidden_state
-  - pooling via token [CLS] (posiÁ„o 0)
+  - tokeniza√ß√£o via batch_encode_plus (n√£o tok(...))
+  - sa√≠da do modelo √© TUPLA: out[0] = last_hidden_state
+  - pooling via token [CLS] (posi√ß√£o 0)
 
-O DNABERT fica CONGELADO (eval + no_grad). Os embeddings s„o determinÌsticos,
-ent„o podem ser prÈ-computados uma vez (ver precompute_embeddings.py).
+O DNABERT fica CONGELADO (eval + no_grad). Os embeddings s√£o determin√≠sticos,
+ent√£o podem ser pr√©-computados uma vez (ver precompute_embeddings.py).
 """
 import torch
 from transformers import BertModel, BertTokenizer
 
-DNABERT_PATH = '/home/mateus25032/work/DNABERT/DNA_bert_6'   # ajuste ao caminho real no Heisenberg
+from . import paths
+
+# Diret√≥rio do DNABERT-6
+DNABERT_PATH = str(paths.DNABERT_DIR)
 KMER = 6
 
 
 def seq_to_kmers(seq, k=KMER):
-    """Converte 'ATCGATCG' em '6-mers sobrepostos separados por espaÁo'."""
+    """Converte 'ATCGATCG' em '6-mers sobrepostos separados por espa√ßo'."""
     seq = seq.upper()
     return ' '.join(seq[i:i+k] for i in range(len(seq) - k + 1))
 
@@ -31,15 +33,15 @@ class DNABERTEmbedder:
         self.model = BertModel.from_pretrained(path)
         self.model.to(self.device)
         self.model.eval()                 # CONGELADO
-        for p in self.model.parameters(): # garante que n„o treina
+        for p in self.model.parameters(): # garante que n√£o treina
             p.requires_grad = False
         self.max_length = max_length
 
     @torch.no_grad()
     def embed_batch(self, sequences):
         """
-        sequences: lista de strings de nucleotÌdeos (ex: wide targets 47bp)
-        Retorna tensor (len(sequences), 768) ó embedding [CLS] de cada uma.
+        sequences: lista de strings de nucleot√≠deos (ex: wide targets 47bp)
+        Retorna tensor (len(sequences), 768) ¬ó embedding [CLS] de cada uma.
         """
         kmer_texts = [seq_to_kmers(s) for s in sequences]
 
@@ -55,6 +57,6 @@ class DNABERTEmbedder:
         attention_mask = encoded['attention_mask'].to(self.device)
 
         out = self.model(input_ids, attention_mask=attention_mask)
-        last_hidden = out[0]                    # (batch, seq_len, 768) ó TUPLA na 2.5
-        cls = last_hidden[:, 0, :]              # token [CLS] ? (batch, 768)
+        last_hidden = out[0]
+        cls = last_hidden[:, 0, :]
         return cls.cpu()
