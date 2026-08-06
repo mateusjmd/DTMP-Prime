@@ -1,19 +1,17 @@
-# -*- coding: latin-1 -*-
-
 #!/usr/bin/env python3
 """
-Fase 3 ó ConstruÁ„o do alinhamento PegRNA-DNA de 73 posiÁıes (on-target).
+Fase 3 ‚Äî Constru√ß√£o do alinhamento PegRNA-DNA de 73 posi√ß√µes (on-target).
 
-LIMITE DE REPRODUTIBILIDADE: o paper afirma "lengths equal to 73" mas N√O
-especifica a composiÁ„o das 73 posiÁıes nem como o alinhamento È construÌdo.
-A decomposiÁ„o abaixo È INFER NCIA NOSSA, documentada como tal.
+LIMITE DE REPRODUTIBILIDADE: o paper afirma "lengths equal to 73" mas N√ÉO
+especifica a composi√ß√£o das 73 posi√ß√µes nem como o alinhamento √© constru√≠do.
+A decomposi√ß√£o abaixo √© INFER√äNCIA NOSSA, documentada como tal.
 
-DecomposiÁ„o adotada: [wide target 47bp] + [extens„o 3' (RTT+PBS), atÈ 26bp] = 73.
+Decomposi√ß√£o adotada: [wide target 47bp] + [extens√£o 3' (RTT+PBS), at√© 26bp] = 73.
 No on-target, peg = dna (match perfeito) -> linhas de mismatch/gap ficam
-zeradas, refletindo que n„o h· desalinhamento. O encoding captura ent„o a
-composiÁ„o de sequÍncia (linhas de nucleotÌdeo com -1) e o PAM.
+zeradas, refletindo que n√£o h√© desalinhamento. O encoding captura ent√£o a
+composi√ß√£o de sequ√™ncia (linhas de nucleot√≠deo com -1) e o PAM.
 """
-from Encoding_8xL import encode_pair_padded, GAP
+from .encoding_8xL import encode_pair_padded, GAP
 
 WIDE_LEN = 47
 EXT_LEN = 26          # 73 - 47
@@ -23,7 +21,7 @@ TOTAL_LEN = 73
 def build_73_alignment(wide_target, pbs, rtt):
     wide = wide_target.upper()[:WIDE_LEN].ljust(WIDE_LEN, GAP)
     ext = (rtt + pbs).upper()[:EXT_LEN]
-    # on-target: peg = dna (match perfeito) -> sem mismatches esp˙rios
+    # on-target: peg = dna (match perfeito) -> sem mismatches esp√∫rios
     peg = wide + ext
     dna = wide + ext
     peg = peg[:TOTAL_LEN].ljust(TOTAL_LEN, GAP)
