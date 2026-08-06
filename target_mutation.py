@@ -1,20 +1,20 @@
-# -*- coding: latin-1 -*-
+import os
 import sys
 import subprocess
 import pickle
 import pandas as pd
 import numpy as np
 
-# Functions imported from Utilite.py at runtime via main.py's _load() mechanism.
-# When running standalone, import them here:
-try:
-	from Utilite import (revcomp, get_gRNA_cut_site, is_gRNA_valid,
-						 run_pam_finder, sub_fasta_single, get_opposite_strand,
-						 distance_matrix, global_alignments, GC_content,
-						 call_RNAplfold, is_dPAM, target_to_RTT5_feature,
-						 get_DeepSpCas9_score, force_recommend_dPAM_PE3b)
-except ImportError:
-	pass  # injected by main.py _load() into caller namespace
+from . import paths
+
+# Import relativo dentro do pacote. Antes era um import plano dentro de um
+# try/except ImportError com 'pass': se falhasse, o m√≥dulo carregava sem as
+# fun√ß√µes e s√≥ quebrava muito depois, com NameError, longe da causa.
+from .utilite import (revcomp, get_gRNA_cut_site, is_gRNA_valid,
+					  run_pam_finder, sub_fasta_single, get_opposite_strand,
+					  distance_matrix, global_alignments, GC_content,
+					  call_RNAplfold, is_dPAM, target_to_RTT5_feature,
+					  get_DeepSpCas9_score, force_recommend_dPAM_PE3b)
 
 # Target mutation
 # A number of influential features on the accuracy of the editing output are defined here, and some are defined in the above cell and the sgRNA class
@@ -435,7 +435,7 @@ class target_mutation:
 		#These will be used later: self.offset ,self.PAM
 
 		if debug>0:
-			subprocess.call("mkdir -p %s"%(self.debug_folder),shell=True)		
+			os.makedirs(self.debug_folder, exist_ok=True)
 		self.offset = offset
 		self.PAM = PAM
 
@@ -587,11 +587,11 @@ class target_mutation:
 #
 #		if use_transformer:
 #			import torch
-#			#from tokenizer_order3 import build_input_from_rawX
-#			from tokenizer_order3 import tokenize_row
-#			from features_inferencia import compute_14_features, FeatureNormalizer
+#			#from .tokenizer_order3 import build_input_from_rawX
+#			from .tokenizer_order3 import tokenize_row
+#			from .features_inferencia import compute_14_features, FeatureNormalizer
 #			from alignment_73 import encode_candidate
-#			from wide_target import extract_wide_target
+#			from .wide_target import extract_wide_target
 #			
 #
 #			device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -600,7 +600,7 @@ class target_mutation:
 #			model.to(device)
 #			model.eval()
 #			
-#			# Carrega as stats de normalizaÁ„o salvas no treino (14 features)
+#			# Carrega as stats de normaliza√ß√£o salvas no treino (14 features)
 #			normalizer = FeatureNormalizer('feature_norm.npz')
 #			
 #			tensors = [[] for _ in range(9)]
@@ -608,7 +608,7 @@ class target_mutation:
 #			enc_rows = []
 #			valid_idx = []
 #			for idx in self.X.index:
-#				# rawX e self.X possuem o mesmo Ìndice ó acessa sequencias por idx
+#				# rawX e self.X possuem o mesmo √≠ndice √© acessa sequencias por idx
 #				raw_row = self.rawX.loc[idx]
 #				#toks = build_input_from_rawX(raw_row, target_fa=self.target_fa)
 #				toks = tokenize_row(raw_row, self.target_fa)
@@ -678,7 +678,7 @@ class target_mutation:
 #		else:
 #			group_key = self.rawX.columns[0]   # fallback
 #
-#		# MantÈm o melhor de cada sgRNA (rawX j· est· ordenado por eficiÍncia desc)
+#		# Mant√©m o melhor de cada sgRNA (rawX j√° est√° ordenado por efici√™ncia desc)
 #		self.topX = self.rawX.drop_duplicates(subset=[group_key], keep='first').copy()
 #		self.topX = self.topX.sort_values("predicted_efficiency", ascending=False)
 
@@ -691,19 +691,24 @@ class target_mutation:
 
 		if use_transformer:
 				import torch
-				from tokenizer_order3 import tokenize_row
-				from features_inferencia import compute_14_features, FeatureNormalizer
+				from .tokenizer_order3 import tokenize_row
+				from .features_inferencia import compute_14_features, FeatureNormalizer
 
-				# -- switch da Forma B: vers„o do modelo --
+				# -- switch da Forma B: vers√£o do modelo --
 				use_encoding = kwargs.get('use_encoding', False)
-				feature_norm_path = kwargs.get('feature_norm_path', 'feature_norm.npz')
+				feature_norm_path = kwargs.get('feature_norm_path') or paths.norm('feature_norm.npz')
 
 				if use_encoding:
-					from alignment_73 import encode_candidate
-					from wide_target import extract_wide_target
+					from reconstruction.alignment_73 import encode_candidate
+					from .wide_target import extract_wide_target
 
 				device = 'cuda' if torch.cuda.is_available() else 'cpu'
-				model = torch.load(transformer_model, map_location=device, weights_only=False)
+				paths.require(transformer_model, "Modelo Transformer",
+							  "Verifique 'transformer_model' no config.yaml.")
+				# compat.torch_load resolve refer√™ncias a m√≥dulos do layout antigo
+				# (ex.: 'Train_models') gravadas no pickle no momento do treino.
+				from . import compat
+				model = compat.torch_load(transformer_model, map_location=device)
 				model.to(device)
 				model.eval()
 
@@ -711,7 +716,7 @@ class target_mutation:
 
 				tensors = [[] for _ in range(9)]
 				feat_rows = []
-				enc_rows = []                       # usado sÛ se use_encoding
+				enc_rows = []                       # usado s√≥ se use_encoding
 				valid_idx = []
 				for idx in self.X.index:
 					raw_row = self.rawX.loc[idx]
@@ -727,7 +732,7 @@ class target_mutation:
 						guide=raw_row['sgRNA_seq'], deepspcas9=raw_row['DeepSpCas9'])
 					feat_rows.append(normalizer.normalize(feats))
 
-					# -- encoding sÛ na vers„o Fase 3 --
+					# -- encoding s√≥ na vers√£o Fase 3 --
 					if use_encoding:
 						wide = extract_wide_target(self.target_fa,
 												int(raw_row['cut_position']), raw_row['strand'])
@@ -738,7 +743,7 @@ class target_mutation:
 					batch = [torch.tensor(t, dtype=torch.long, device=device) for t in tensors]
 					other_feats = torch.tensor(feat_rows, dtype=torch.float32, device=device)
 
-					# -- monta a chamada conforme a vers„o --
+					# -- monta a chamada conforme a vers√£o --
 					if use_encoding:
 						enc_matrix = torch.tensor(enc_rows, dtype=torch.float32, device=device)
 						output = model(batch, other_features=other_feats, encoding_matrix=enc_matrix)
@@ -753,6 +758,12 @@ class target_mutation:
 			
 
 		else:
+			paths.require(PE2_model, "Modelo XGBoost PE2",
+						  "Baixe os modelos conforme models/README.md, ou ative o "
+						  "Transformer com use_transformer: true no config.yaml.")
+			paths.require(PE3_model, "Modelo XGBoost PE3",
+						  "Baixe os modelos conforme models/README.md, ou ative o "
+						  "Transformer com use_transformer: true no config.yaml.")
 			with open(PE2_model, 'rb') as f:
 				xgb_model_PE2 = pickle.load(f)
 			with open(PE3_model, 'rb') as f:
@@ -775,9 +786,9 @@ class target_mutation:
 		self.X_p = self.X_p.sort_values("predicted_efficiency", ascending=False)
 		self.rawX = self.rawX.sort_values("predicted_efficiency", ascending=False)
 
-		# Dedup pela combinaÁ„o que define um candidato ⁄NICO: pegRNA (spacer+PBS+RTT)
-		# E o ngRNA pareado. Incluir ngRNA_name preserva os m˙ltiplos nicking guides
-		# de cada pegRNA (o rawX j· os enumera via cross-product em get_rawX_and_X).
+		# Dedup pela combina√ß√£o que define um candidato √öNICO: pegRNA (spacer+PBS+RTT)
+		# E o ngRNA pareado. Incluir ngRNA_name preserva os m√∫ltiplos nicking guides
+		# de cada pegRNA (o rawX j√° os enumera via cross-product em get_rawX_and_X).
 		dedup_keys = [k for k in ['sgRNA_seq', 'PBS_seq', 'RTT_seq', 'ngRNA_name']
 					if k in self.rawX.columns]
 		if not dedup_keys:
