@@ -18,6 +18,7 @@ import yaml
 import itertools
 import pickle
 import subprocess
+import tempfile
 from skbio.alignment import global_pairwise_align_nucleotide
 from skbio import DNA
 import RNA
@@ -32,79 +33,12 @@ def write_file(file_name,message):
 	out.write(message)
 	out.close()
 
-# For controlling the printed results - can replace the above function
-def print_parameters(myDict):
-	myGroup = {}
-	myGroup['Prime Editing'] = ['genome_fasta','scaffold','n_jobs','debug','PE2_model','PE3_model','extend_length']
-	myGroup['PBS searching'] = ['min_PBS_length','max_PBS_length']
-	myGroup['RTT searching'] = ['min_RTT_length','max_RTT_length','min_distance_RTT5','max_max_RTT_length']
-	myGroup['sgRNA searching'] = ['gRNA_search_space','sgRNA_length','offset','PAM','max_target_to_sgRNA','max_max_target_to_sgRNA']
-	myGroup['ngRNA searching'] = ['max_ngRNA_distance']
-	for k in myGroup:
-		print_group(myDict,myGroup[k],k)
-
-
-def print_group(myDict,myList,group_title):
-	print ("-------- Parameter Group: %s --------"%(group_title))
-	for l in myList:
-		print ("%s: %s"%(l,myDict[l]))
-
-
-# Defining default parameters
-def get_parameters(config):
-	p_dir = os.path.dirname(os.path.realpath(__file__)) + "/"
-	# return dict
-	parameters = {}
-	# default parameters
-	pre_defined_list = {}
-	#------------ Prime Editing related-----------
-	# I need to provide this input for the program
-	pre_defined_list["genome_fasta"] = "/home/yli11/Data/Human/hg19/fasta/hg19.fa"
-	pre_defined_list["n_jobs"] = -1
-	pre_defined_list["scaffold"] = "GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGC"
-	pre_defined_list["debug"] = 0
-	pre_defined_list["extend_length"] = 1000 # extracting +- 1000bp center at target pos from the genome, in 99.9% cases, you don't need to change this. If change to less than 500, will trigger fasta input mode, may cause error.
-	# I introduce pretrained models here.
-	# You can use DEEPPRIME
-
-	pre_defined_list["PE2_model"] = p_dir+"../model/PE2_model_final.py"
-	pre_defined_list["PE3_model"] = p_dir+"../model/PE3_model_final.py"
-
-	#------------ PBS -----------
-	pre_defined_list["min_PBS_length"] = 10
-	pre_defined_list["max_PBS_length"] = 15
-
-	#------------ RTT -----------
-	pre_defined_list["min_RTT_length"] = 10
-	pre_defined_list["max_RTT_length"] = 20 # if no candidate is found, this value will be increased by 5, max to max_max_RTT_length
-	pre_defined_list["max_max_RTT_length"] = 50
-	pre_defined_list["min_distance_RTT5"] = 5
-
-	#------------ sgRNA -----------
-	pre_defined_list["gRNA_search_space"] = 200
-	pre_defined_list["sgRNA_length"] = 20
-	pre_defined_list["offset"] = -3
-	pre_defined_list["PAM"] = "NGG"
-	pre_defined_list["max_target_to_sgRNA"] = 10 # if no candidate is found, this value will be increased by 5, max to max_max_target_to_sgRNA
-	pre_defined_list["max_max_target_to_sgRNA"] = 30
-
-	#------------ ngRNA ------------
-	pre_defined_list["max_ngRNA_distance"] = 100 # if no candidate is found, this value will be increased by 20, max to max_max_ngRNA_distance
-	pre_defined_list["max_max_ngRNA_distance"] = 200
-	pre_defined_list["search_iteration"] = 1 # not affect anything
-
-	try:
-		with open(config, 'r') as f:
-			manifest_data = yaml.load(f,Loader=yaml.FullLoader)
-	except:
-		print ("Config data is not provided or not parsed successfully, Default parameters were used.")
-
-	for p in pre_defined_list:
-		try:
-			parameters[p] = manifest_data[p]
-		except:
-			parameters[p] = pre_defined_list[p]
-	return parameters
+# NOTA: as funções print_parameters/print_group/get_parameters que existiam
+# aqui eram uma cópia divergente das de dtmp_prime/main.py — e a cópia daqui
+# ainda apontava PE2_model/PE3_model para '../model/PE2_model_final.py' (.py
+# em vez de .pkl). Como main.py faz 'from .utilite import *' e depois redefine
+# as três, a versão daqui era código morto que só criava risco de divergência.
+# Fonte única: dtmp_prime.main.get_parameters (defaults via dtmp_prime.paths).
 
 def to_bed3(chr,start,end):
 	outfile = str(uuid.uuid4()).split("-")[-1]
@@ -267,22 +201,39 @@ def vcf2fasta(vcf,extend_length=None,genome_fasta=None,**kwargs):
 
 	"""
 
-	out_bed = str(uuid.uuid4()).split("-")[-1]+".bed"
-	out_fa = out_bed+".tab"
-	df = vcf.copy()
-	df['chr'] = df[0]
-	df['start'] = df[1]-extend_length
-	df['end'] = df[1]+extend_length
-	df[['chr','start','end']].to_csv(out_bed,sep="\t",header=False,index=False)
+	if shutil.which("bedtools") is None:
+		raise RuntimeError(
+			"O executável 'bedtools' não foi encontrado no PATH.\n"
+			"  -> Instale-o (conda install -c bioconda bedtools) ou forneça a entrada\n"
+			"     em formato FASTA, que dispensa o genoma de referência."
+		)
 
-	p1 = subprocess.Popen(['bedtools','getfasta','-fi',genome_fasta,'-bed',out_bed,'-fo',out_fa,'-tab'],bufsize=0)
-	p1.communicate()
-	df = pd.read_csv(out_fa,sep="\t",header=None,index_col=0)
+	# Arquivos temporários em diretório próprio: antes eram criados no diretório
+	# de trabalho corrente e, se o bedtools falhasse, ficavam órfãos lá.
+	tmp_dir = tempfile.mkdtemp(prefix="dtmp_prime_")
+	out_bed = os.path.join(tmp_dir, str(uuid.uuid4()).split("-")[-1] + ".bed")
+	out_fa = out_bed + ".tab"
+	try:
+		df = vcf.copy()
+		df['chr'] = df[0]
+		df['start'] = df[1]-extend_length
+		df['end'] = df[1]+extend_length
+		df[['chr','start','end']].to_csv(out_bed,sep="\t",header=False,index=False)
 
-	os.remove(out_bed)
-	os.remove(out_fa)
-
-	return [x.upper() for x in df[1]]
+		p1 = subprocess.Popen(['bedtools','getfasta','-fi',str(genome_fasta),'-bed',out_bed,'-fo',out_fa,'-tab'],
+							  stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
+		_, stderr = p1.communicate()
+		if p1.returncode != 0:
+			raise RuntimeError(
+				"bedtools getfasta falhou (código %s):\n%s\n"
+				"  -> Verifique se o genoma %s existe, tem índice .fai ao lado e usa a\n"
+				"     mesma nomenclatura de cromossomos do seu VCF (chr1 vs 1)."
+				% (p1.returncode, (stderr or b"").decode("utf-8", "replace"), genome_fasta)
+			)
+		df = pd.read_csv(out_fa,sep="\t",header=None,index_col=0)
+		return [x.upper() for x in df[1]]
+	finally:
+		shutil.rmtree(tmp_dir, ignore_errors=True)
 
 def get_opposite_strand(x):
 	if x == "+":
