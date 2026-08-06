@@ -1,19 +1,19 @@
-# -*- coding: latin-1 -*-
-
 #!/usr/bin/env python3
 """
-Fase 2b — Cálculo das 14 features na inferência.
+Fase 2b Â— CÃ¡lculo das 14 features na inferÃªncia.
 
-Fórmulas validadas contra o Table-S5 (fidelidade 93-100%).
-A ORDEM das features é idêntica à do treino (FEAT_IDX = [8,11,13..24]).
+FÃ³rmulas validadas contra o Table-S5 (fidelidade 93-100%).
+A ORDEM das features Ã© idÃªntica Ã  do treino (FEAT_IDX = [8,11,13..24]).
 """
 import numpy as np
+
+from . import paths
 from Bio.Seq import Seq
 from Bio.SeqUtils import MeltingTemp as mt
 from Bio.SeqUtils import gc_fraction as gc
 from RNA import fold_compound
 
-# Scaffold padrão do sgRNA (mesmo do config.yaml do projeto)
+# Scaffold padrÃ£o do sgRNA (mesmo do config.yaml do projeto)
 SCAFFOLD = "GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGC"
 POLYT = "TTTTTT"
 
@@ -40,45 +40,48 @@ def compute_14_features(pbs, rtt, guide, deepspcas9):
     """
     Retorna lista de 14 floats na ORDEM EXATA do treino.
 
-    pbs, rtt : strings das sequências (do rawX: PBS_seq, RTT_seq)
+    pbs, rtt : strings das sequÃªncias (do rawX: PBS_seq, RTT_seq)
     guide    : sgRNA_seq (GN19, com G artificial)
-    deepspcas9 : valor já computado no rawX
+    deepspcas9 : valor jÃ¡ computado no rawX
     """
     pbs = pbs.upper(); rtt = rtt.upper(); guide = guide.upper()
     pbs_rtt = pbs + rtt
 
     feats = [
-        # 0: Tm1 — PBS, híbrido DNA/RNA
+        # 0: Tm1 Â— PBS, hÃ­brido DNA/RNA
         _tm(pbs, mt.R_DNA_NN1),
-        # 1: Tm4 — RTT, híbrido DNA/RNA
+        # 1: Tm4 Â— RTT, hÃ­brido DNA/RNA
         _tm(rtt, mt.R_DNA_NN1),
         # 2-4: GC counts
         pbs.count('G') + pbs.count('C'),
         rtt.count('G') + rtt.count('C'),
         pbs_rtt.count('G') + pbs_rtt.count('C'),
-        # 5-7: GC contents (fração × 100)
+        # 5-7: GC contents (fraÃ§Ã£o Ã— 100)
         100 * gc(pbs),
         100 * gc(rtt),
         100 * gc(pbs_rtt),
-        # 8: MFE_1 — pegRNA completo + polyT
+        # 8: MFE_1 Â— pegRNA completo + polyT
         _mfe(guide + SCAFFOLD + _rc(pbs_rtt) + POLYT),
-        # 9: MFE_2 — scaffold + extensão + polyT
+        # 9: MFE_2 Â— scaffold + extensÃ£o + polyT
         _mfe(SCAFFOLD + _rc(pbs_rtt) + POLYT),
-        # 10: MFE_3 — extensão + polyT
+        # 10: MFE_3 Â— extensÃ£o + polyT
         _mfe(_rc(pbs_rtt) + POLYT),
-        # 11: MFE_4 — spacer (guide)
+        # 11: MFE_4 Â— spacer (guide)
         _mfe(guide),
-        # 12: MFE_5 — spacer + scaffold
+        # 12: MFE_5 Â— spacer + scaffold
         _mfe(guide + SCAFFOLD),
-        # 13: DeepSpCas9 — já computado no rawX
+        # 13: DeepSpCas9 Â— jÃ¡ computado no rawX
         float(deepspcas9),
     ]
     return feats
 
 
 class FeatureNormalizer:
-    """Carrega as stats de normalização salvas no treino e aplica z-score."""
-    def __init__(self, norm_path='feature_norm.npz'):
+    """Carrega as stats de normalizaÃ§Ã£o salvas no treino e aplica z-score."""
+    def __init__(self, norm_path=None):
+        norm_path = paths.norm(norm_path or 'feature_norm.npz')
+        paths.require(norm_path, "Arquivo de normalizaÃ§Ã£o de features",
+                      "Verifique 'feature_norm_path' no config.yaml.")
         data = np.load(norm_path, allow_pickle=True)
         self.mean = data['mean']
         self.std = data['std']
