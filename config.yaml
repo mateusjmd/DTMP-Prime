@@ -1,4 +1,18 @@
-genome_fasta: hg38.fa
+# ==========================================================================
+# DTMP-Prime — configuração do pipeline
+#
+# Caminhos de artefatos (transformer_model, feature_norm_path, PE2/PE3_model)
+# podem ser RELATIVOS: são resolvidos contra models/ e feature_norms/ e, em
+# último caso, contra a raiz do repositório.
+# ==========================================================================
+
+# ---------- Genoma de referência ----------
+# Obrigatório apenas para entrada em VCF. Entradas em FASTA (par ref/alt)
+# dispensam o genoma. Exige o índice .fai ao lado do .fa (samtools faidx).
+# Pode ser sobrescrito pela variável de ambiente DTMP_GENOME.
+genome_fasta: /home/mateus25032/work/DTMP-Prime/data/hg38.fa
+
+# ---------- Parâmetros de desenho ----------
 scaffold: GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGC
 n_jobs: 1
 debug: 0
@@ -11,14 +25,25 @@ max_ngRNA_distance: 100
 sgRNA_length: 20
 offset: -3
 PAM: NGG
+
+# ==========================================================================
+# Escolha do modelo de predição
+# Mantenha exatamente UM dos blocos abaixo descomentado.
+# ==========================================================================
+
 use_transformer: true
 
-# __________ MODELO DE PRODU��O __________
-transformer_model: /home/mateus25032/work/DTMP-Prime-FULL/Model_Trained/pegRNA_Transformer_fase2a_(14_features).pt
+# ---------- MODELO DE PRODUÇÃO (Fase 2a, 14 features) ----------
+transformer_model: fase2a_model.pt
 use_encoding: false
-feature_norm_path: /home/mateus25032/work/DTMP-Prime-FULL/feature_norms/feature_norm_cv.npz
+feature_norm_path: feature_norm.npz
 
-# __________ MODELO DE COMPLETUDE __________
-#transformer_model: /home/mateus25032/work/DTMP-Prime-FULL/Model_Trained/pegRNA_Transformer_fase3.pt
+# ---------- MODELO DE COMPLETUDE (Fase 3, encoding 8x73) ----------
+#transformer_model: pegRNA_Transformer_fase3.pt
 #use_encoding: true
 #feature_norm_path: feature_norm_fase3.npz
+
+# ---------- FALLBACK XGBoost (use_transformer: false) ----------
+# Exige models/PE2_model_final.pkl e models/PE3_model_final.pkl.
+#PE2_model: PE2_model_final.pkl
+#PE3_model: PE3_model_final.pkl
