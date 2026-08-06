@@ -1,5 +1,3 @@
-# -*- coding: latin-1 -*-
-
 # wide_target.py
 COMPLEMENT = str.maketrans('ACGTN', 'TGCAN')
 
@@ -8,7 +6,7 @@ def revcomp(seq):
 
 def extract_wide_target(target_fa, cut_position, strand):
     """
-    Reconstrói a Wide target sequence de 47bp na convenção do Table-S5:
+    ReconstrÃ³i a Wide target sequence de 47bp na convenÃ§Ã£o do Table-S5:
     [4bp upstream][20bp protospacer][3bp PAM][20bp downstream]
 
     Offsets calibrados empiricamente contra sgRNA_seq + PAM:
@@ -29,7 +27,7 @@ def extract_wide_target(target_fa, cut_position, strand):
 
     else:  # strand '-'
         proto_start = cut_position - 4
-        # No -strand, a janela de 47bp no +strand é [proto_start-23 : proto_start+24],
+        # No -strand, a janela de 47bp no +strand Ã© [proto_start-23 : proto_start+24],
         # depois revcomp para ler no -strand em 5'?3'.
         w_start = proto_start - 23
         w_end   = proto_start + 24     # 47bp
