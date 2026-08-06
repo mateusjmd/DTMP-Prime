@@ -1,5 +1,3 @@
-# -*- coding: latin-1 -*-
-
 import numpy as np
 import pandas as pd
 import time
@@ -17,7 +15,8 @@ import torch.nn.functional as F
 
 #sys.path.insert(0,'./pegRNA_PredictingCodes')
 
-import Evaluate as evaluate_model
+from . import paths
+from . import evaluate as evaluate_model
 
 def set_seed(seed):
     random.seed(seed)
@@ -558,17 +557,17 @@ class TransformerEncoderDecoderModelOrder3(nn.Module):
         self.dnabert_finetune = dnabert_finetune
         print(self.model_type)
 
-        # -- NOVO: projeção do embedding DNABERT (768 ? dnabert_dim) --
+        # -- NOVO: projeÃ§Ã£o do embedding DNABERT (768 ? dnabert_dim) --
         if dnabert_dim > 0:
             if dnabert_finetune:
-                # DNABERT vira submódulo TREINÁVEL
+                # DNABERT vira submÃ³dulo TREINÃVEL
                 from transformers import BertModel
                 self.dnabert = BertModel.from_pretrained(dnabert_path)
                 for p in self.dnabert.parameters():
                     p.requires_grad = True          # treina junto
                 self.dnabert_fc = nn.Linear(768, dnabert_dim)
             #else:
-                # Abordagem 1: só a projeção (embedding vem pré-computado)
+                # Abordagem 1: sÃ³ a projeÃ§Ã£o (embedding vem prÃ©-computado)
             self.dnabert_fc = nn.Linear(768, dnabert_dim)
             self.dnabert_relu = nn.ReLU()
 
@@ -760,12 +759,12 @@ class TransformerEncoderDecoderModelOrder3(nn.Module):
         # -- NOVO Fase 4: ramo DNABERT --
         if getattr(self, 'dnabert_dim', 0) > 0:
             if getattr(self, 'dnabert_finetune', False):
-                # passa pelo BERT COM gradientes (dnabert_ids/mask vêm do batch)
+                # passa pelo BERT COM gradientes (dnabert_ids/mask vÃªm do batch)
                 out = self.dnabert(dnabert_ids, attention_mask=dnabert_mask)
                 cls = out[0][:, 0, :]              # (batch, 768), out[0] na API 2.5
                 db = self.dnabert_relu(self.dnabert_fc(cls))
             else:
-                # Abordagem 1: embedding pré-computado
+                # Abordagem 1: embedding prÃ©-computado
                 db = self.dnabert_relu(self.dnabert_fc(dnabert_emb))
             combined = torch.cat([combined, db], 1)
 
@@ -1192,20 +1191,26 @@ class CombinedModel(nn.Module):
         return output, None
 
 
-def save_model(model, model_dir='Model_Trained_20D', model_name='pegRNA_Model.pt'):
+def save_model(model, model_dir=None, model_name='pegRNA_Model.pt'):
     start = time.time()
-    if not os.path.exists(model_dir):
-        os.makedirs(model_dir)
+    model_dir = paths.MODELS if model_dir is None else paths.Path(model_dir)
+    if not model_dir.is_absolute():
+        model_dir = paths.MODELS / model_dir
+    paths.ensure_dir(model_dir)
     with open(os.path.join(model_dir, model_name), 'wb') as f:
         # torch.save(model.state_dict(), f)
         torch.save(model, f)
     print(f'Saving time:{time.time() - start:.2f}s')
 
 
-def load_model(device, model_dir='Model_Trained_20D', model_name='pegRNA_Model.pt'):
+def load_model(device, model_dir=None, model_name='pegRNA_Model.pt'):
     start = time.time()
-    assert os.path.exists(os.path.join(model_dir, model_name)), 'The model does not exist!'
-    model = torch.load(os.path.join(model_dir, model_name),  map_location=device)
+    model_dir = paths.MODELS if model_dir is None else paths.Path(model_dir)
+    if not model_dir.is_absolute():
+        model_dir = paths.MODELS / model_dir
+    paths.require(os.path.join(model_dir, model_name), "Modelo treinado")
+    from . import compat
+    model = compat.torch_load(os.path.join(model_dir, model_name), map_location=device)
 
     model.eval()
     print(f'Loading time:{time.time() - start:.2f}s')
@@ -1213,7 +1218,7 @@ def load_model(device, model_dir='Model_Trained_20D', model_name='pegRNA_Model.p
     return model
 
 
-def extract_attention(transformer, data, output_dir='Model_Trained_20D', output_name='pegRNA_attention_weight.xlsx'):
+def extract_attention(transformer, data, output_dir=None, output_name='pegRNA_attention_weight.xlsx'):
     # interpret result
     data_X = data.iloc[:, :-1]
     data_y = data.iloc[:, -1]
@@ -1234,11 +1239,12 @@ def extract_attention(transformer, data, output_dir='Model_Trained_20D', output_
 
     t1 = time.time()
     print(f'Extracting attention time:{t1 - t0}')
+    output_dir = paths.ensure_dir(output_dir or paths.MODELS)
     result.to_excel(os.path.join(output_dir, output_name), sheet_name='attention_weight')
     print(f'Outputing time:{time.time() - t1}')
 
 
-def extract_attention_order3(transformer, data, device, output_dir='Model_Trained', output_name='pegRNA_attention_weight.xlsx'):
+def extract_attention_order3(transformer, data, device, output_dir=None, output_name='pegRNA_attention_weight.xlsx'):
     # interpret result
     data_X = data.iloc[:, :-1]
     data_y = data.iloc[:, -1]
@@ -1286,6 +1292,7 @@ def extract_attention_order3(transformer, data, device, output_dir='Model_Traine
 
     t1 = time.time()
     print(f'Extracting attention time:{t1 - t0:.2f}')
+    output_dir = paths.ensure_dir(output_dir or paths.MODELS)
     writer = pd.ExcelWriter(os.path.join(output_dir, output_name))
     result.to_excel(writer, '1-mer')
     result1.to_excel(writer, '2-mer')
