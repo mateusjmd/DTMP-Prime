@@ -1,15 +1,17 @@
-# -*- coding: latin-1 -*-
 """
-train_transformer.py — Treino do TransformerEncoderDecoderModelOrder3
-Dependências: torch, pandas, numpy  (NENHUMA dependência DNABERT/transformers)
+train_transformer.py â€” Treino do TransformerEncoderDecoderModelOrder3
+DependÃªncias: torch, pandas, numpy  (NENHUMA dependÃªncia DNABERT/transformers)
 """
-import sys, torch
-sys.path.append('.')
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   # raiz do repositÃ³rio
+import torch
 
 # Importa diretamente do notebook convertido (ver nota abaixo)
-from Train_models import TransformerEncoderDecoderModelOrder3, train_and_test_transformer_order3, save_model
-import read_data as rnd
-import Evaluate as evaluate_model
+from dtmp_prime.train_models import TransformerEncoderDecoderModelOrder3, train_and_test_transformer_order3, save_model
+import dtmp_prime.read_data as rnd
+import dtmp_prime.evaluate as evaluate_model
+from dtmp_prime import paths
 
 # -- 1. Carregar e tokenizar os dados --------------------------------------
 # ADAPTAR: apontar para seu dataset real e mapear colunas
@@ -23,7 +25,7 @@ X = df_order3.iloc[:, :-1]      # Target, PBS, RT (+ _o2, _o3)
 y = df_order3['Efficiency']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=42)
 
-# -- 3. Hiperparâmetros (valores usados no repositório) ---------------------
+# -- 3. HiperparÃ¢metros (valores usados no repositÃ³rio) ---------------------
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 hyperparameters = {
     'embedding_size':     512,
@@ -33,7 +35,9 @@ hyperparameters = {
     'nhead':              8,
     'num_encoder_layers': [6, 6, 6],
     'drop_out':           0.1,
-    'other_size':         0,
+    # A chave 'other_size' aparecia duas vezes neste dicionÃ¡rio (0 aqui e 17 no
+    # final): o Python mantinha silenciosamente a Ãºltima. Mantido o valor 17.
+    'other_size':         17,
     'lr':                 1e-4,
     'weight_decay':       1e-5,
     'epoch_num':          100,
@@ -42,7 +46,6 @@ hyperparameters = {
     'transfer':           False,
     'freezing':           False,
     'device':             device,
-    'other_size':         17
 }
 
 # -- 4. Treinar -----------------------------------------------------------
@@ -51,5 +54,5 @@ transformer = train_and_test_transformer_order3(
 )
 
 # -- 5. Salvar ------------------------------------------------------------
-save_model(transformer, model_dir='Model_Trained', model_name='pegRNA_Transformer.pt')
-print("Modelo salvo em Model_Trained/pegRNA_Transformer.pt")
+save_model(transformer, model_dir=paths.MODELS, model_name='pegRNA_Transformer.pt')
+print(f"Modelo salvo em {paths.model('pegRNA_Transformer.pt')}")
