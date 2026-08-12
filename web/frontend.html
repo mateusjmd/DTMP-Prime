@@ -542,7 +542,6 @@ html[data-theme="dark"] .spin { border-color: rgba(12,13,14,.35); border-top-col
   <div class="mode-bar">
     <button class="mode-btn active" id="mode-manual" onclick="setMode('manual')">Sequências manuais</button>
     <button class="mode-btn" id="mode-fasta" onclick="setMode('fasta')">Arquivo FASTA</button>
-    <button class="mode-btn" id="mode-vcf" onclick="setMode('vcf')">Arquivo VCF</button>
   </div>
 
   <div id="panel-manual">
@@ -576,18 +575,6 @@ html[data-theme="dark"] .spin { border-color: rgba(12,13,14,.35); border-top-col
   <div class="section-hd">
     <h2>Configuração</h2>
     <p>Parâmetros da pipeline — os valores padrão funcionam para a maioria dos casos de uso</p>
-  </div>
-
-  <div class="cfg-group">
-    <div class="cfg-title">Genoma de referência <span class="cfg-note">Necessário apenas para input VCF</span></div>
-    <div class="cfg-body">
-      <div class="cfg-row">
-        <div class="cfg-field full">
-          <label>Caminho para o arquivo FASTA do genoma (ex.: hg38)</label>
-          <input id="c-genome" type="text" class="cfg-input" placeholder="deixe em branco para usar o genome_fasta do config.yaml">
-        </div>
-      </div>
-    </div>
   </div>
 
   <div class="cfg-group">
@@ -739,8 +726,8 @@ html[data-theme="dark"] .spin { border-color: rgba(12,13,14,.35); border-top-col
         <div class="err-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></div>
         <div>
           <div class="err-title">O pipeline encerrou com erro</div>
-          <div class="err-msg">Verifique o log acima para detalhes. Causas comuns: dependências não instaladas, caminho do genoma incorreto, sequências ref/alt inválidas.</div>
-          <div class="err-hint">Dica: certifique-se de que debug ≥ 1 e de que o arquivo de genoma está acessível (modo VCF).</div>
+          <div class="err-msg">Verifique o log acima para detalhes. Causas comuns: dependências não instaladas, configuração inválida ou sequências ref/alt inválidas.</div>
+          <div class="err-hint">Dica: certifique-se de que debug ≥ 1 para registrar mensagens de diagnóstico no log.</div>
         </div>
       </div>
     </div>
@@ -760,13 +747,11 @@ html[data-theme="dark"] .spin { border-color: rgba(12,13,14,.35); border-top-col
       <div class="tut-num">1</div>
       <div class="tut-body">
         <h3>Escolha o modo de entrada</h3>
-        <p>Na aba <strong>Entrada</strong>, selecione como deseja fornecer suas variantes genômicas. Três modos estão disponíveis:</p>
+        <p>Na aba <strong>Entrada</strong>, selecione como deseja fornecer suas variantes genômicas. Dois modos estão disponíveis:</p>
         <ul>
           <li><strong>Sequências manuais</strong> — cole diretamente as sequências de referência e alternativa. Ideal para quem está testando variantes individuais.</li>
           <li><strong>Arquivo FASTA</strong> — envie um <code>.fa</code> ou <code>.fasta</code> com pares nomeados <code>&gt;id_ref</code> / <code>&gt;id_alt</code>. Útil para análise em lote.</li>
-          <li><strong>Arquivo VCF</strong> — envie um <code>.vcf</code> anotado. Requer o caminho do genoma de referência na aba Configuração.</li>
         </ul>
-        <div class="tut-note">Para iniciantes, recomendamos o modo manual. Basta colar ≈ 200 pb de contexto flanqueador em torno da variante.</div>
       </div>
     </div>
 
@@ -779,7 +764,7 @@ html[data-theme="dark"] .spin { border-color: rgba(12,13,14,.35); border-top-col
           <li><strong>Sequência REF</strong> — fragmento genômico com o alelo de referência (wild-type). Inclua ao menos 50 pb de contexto em cada lado da posição-alvo.</li>
           <li><strong>Sequência ALT</strong> — o mesmo fragmento, com a mutação desejada já incorporada (substituição, inserção ou deleção).</li>
         </ul>
-        <div class="tut-note">Sequências na orientação 5'→3'. Aceita maiúsculas e minúsculas. Apenas A, T, G, C são permitidos — sem ambiguidades IUPAC.</div>
+        <div class="tut-note">Sequências na orientação 5'→3', aceitas apenas as bases canônicas A, T, C, G, que podem ser maiúsculas ou minúsculas.</div>
       </div>
     </div>
 
@@ -851,17 +836,21 @@ html[data-theme="dark"] .spin { border-color: rgba(12,13,14,.35); border-top-col
       <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/></svg></div>
       <h3>Arquivos gerados</h3>
       <div class="file-item">
-        <span class="fn">*_top_pegRNAs.csv</span>
+        <span class="fn">topX_pegRNAs.csv</span>
         <span class="fd">Tabela principal com todos os pegRNAs candidatos, ranqueados por eficiência predita. Inclui spacer, RTT, PBS, scores e flags de qualidade.</span>
       </div>
       <div class="file-item">
-        <span class="fn">*_summary.csv</span>
+        <span class="fn">summary.csv</span>
         <span class="fd">Sumário por variante: total de candidatos, distribuição PE2/PE3/PE3b, score médio e melhor design encontrado.</span>
       </div>
       <div class="file-item">
-        <span class="fn">*.log</span>
-        <span class="fd">Log completo de execução, incluindo parâmetros utilizados, avisos e mensagens de diagnóstico do pipeline.</span>
+        <span class="fn">rawX_pegRNAs.csv.gz</span>
+        <span class="fd">Tabela bruta de características de todos os pegRNAs candidatos, com as colunas de projeto legíveis — sequências, PBS/RTT, comprimentos, %GC, flags e distâncias — mais os componentes da representação de sequência e a eficiência predita.</span>
       </div>
+      <div class="file-item">
+        <span class="fn">X_p_pegRNAs.csv.gz</span>
+        <span class="fd">Matriz de entrada já processada, apenas numérica, indexada pelo identificador de cada pegRNA: os componentes da representação de sequência e as features escalares consumidas pelo modelo, com a eficiência predita.</span>
+      </div>     
     </div>
 
     <div class="info-card">
@@ -869,7 +858,6 @@ html[data-theme="dark"] .spin { border-color: rgba(12,13,14,.35); border-top-col
       <h3>Formatos de entrada aceitos</h3>
       <ul>
         <li><span class="file-tag">.fa / .fasta</span> Pares ref/alt com sufixos <code>_ref</code> e <code>_alt</code> no cabeçalho FASTA.</li>
-        <li><span class="file-tag">.vcf</span> VCF padrão (requer genoma de referência acessível no servidor).</li>
         <li>Sequências manuais digitadas na interface (convertidas para FASTA internamente).</li>
       </ul>
       <p style="margin-top:10px;font-size:12px;color:var(--text3)">Sequências devem estar em 5'→3'. Apenas A, T, G, C são aceitos. Comprimento mínimo recomendado: 100 bp com contexto flanqueador.</p>
@@ -891,9 +879,11 @@ html[data-theme="dark"] .spin { border-color: rgba(12,13,14,.35); border-top-col
       <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4a2 2 0 0 1 2-2h11v18H7a2 2 0 0 0-2 2Z"/><path d="M5 20a2 2 0 0 1 2-2h11"/></svg></div>
       <h3>Referências</h3>
       <ul>
+        <li>Alipanahi R., Safari L., Khanteymoori A. (2024). <em>DTMP-prime: A deep transformer-based model for predicting prime editing efficiency and PegRNA activity.</em> <a href="https://doi.org/10.1016/j.omtn.2024.102370" target="_blank">Molecular Therapy Nucleic Acids</a>.</li>
         <li>Anzalone et al. (2019). <em>Search-and-replace genome editing without double-strand breaks or donor DNA.</em> <a href="https://doi.org/10.1038/s41586-019-1711-4" target="_blank">Nature</a>.</li>
         <li>Ji et al. (2021). <em>DNABERT: pre-trained bidirectional encoder representations from transformers model for DNA-language in genome.</em> <a href="https://doi.org/10.1093/bioinformatics/btab083" target="_blank">Bioinformatics</a>.</li>
         <li>Kim et al. (2019). <em>SpCas9 activity prediction by DeepSpCas9.</em> <a href="https://doi.org/10.1126/sciadv.aax9249" target="_blank">Science Advances</a>.</li>
+        <li>Sousa et al. (2024). <em>Systematic optimization of prime editing for the efficient functional correction of CFTR F508del in human airway epithelial cells.</em> <a href="https://doi.org/10.1038/s41551-024-01233-3" target="_blank">Nature</a>.</li>
       </ul>
     </div>
 
@@ -902,10 +892,10 @@ html[data-theme="dark"] .spin { border-color: rgba(12,13,14,.35); border-top-col
       <h3>Contato & Suporte</h3>
       <p>Em caso de dúvidas, bugs ou sugestões, abra uma <em>issue</em> no repositório ou entre em contato:</p>
       <ul class="contact-list">
-        <li><span class="ck">Email</span><a href="mailto:">contato@laboratorio.edu.br</a></li>
-        <li><span class="ck">GitHub</span><a href="https://github.com/" target="_blank">github.com/DTMP-Prime</a></li>
+        <li><span class="ck">Email</span><a href="mailto:">mateus25032@ilum.cnpem.br</a></li>
+        <li><span class="ck">GitHub</span><a href="https://github.com/mateusjmd/DTMP-Prime" target="_blank">github.com/mateusjmd/DTMP-Prime</a></li>
       </ul>
-      <p style="margin-top:10px;font-size:11.5px;color:var(--text3)">Se utilizar em publicações, cite o artigo original disponível no repositório. Agradecemos o feedback da comunidade científica.</p>
+      <p style="margin-top:10px;font-size:11.5px;color:var(--text3)">Em caso de uso da ferramenta, cite o artigo original.</p>
     </div>
 
   </div>
@@ -981,12 +971,11 @@ function switchTab(name) {
 /* ── Mode ─────────────────────────────────────────────────────────────────── */
 function setMode(m) {
   S.mode = m;
-  ['manual','fasta','vcf'].forEach(k => {
+  ['manual','fasta'].forEach(k => {
     $('mode-' + k).classList.toggle('active', k === m);
   });
   $('panel-manual').style.display = m === 'manual' ? '' : 'none';
   $('panel-file').style.display   = m !== 'manual' ? '' : 'none';
-  $('dz-accept').textContent = m === 'vcf' ? 'Formato aceito: .vcf' : 'Formatos aceitos: .fa / .fasta';
   clearFile();
 }
 
@@ -1106,7 +1095,6 @@ function fmtBytes(b) {
 /* ── Config ───────────────────────────────────────────────────────────────── */
 function getConfig() {
   return {
-    genome_fasta:        $('c-genome').value,
     min_PBS_length:      $('c-pbs-min').value,
     max_PBS_length:      $('c-pbs-max').value,
     min_RTT_length:      $('c-rtt-min').value,
