@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DTMP-Prime</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+/* ── Tema: Claro ─────────────────────────────────────── */
+:root, html[data-theme="light"] {
+  --bg0:    #F4F5F5;
+  --bg1:    #FFFFFF;
+  --bg2:    #F6F7F7;
+  --bg3:    #E9EAEA;
+  --accent:   #285887;
+  --accent-d: rgba(40,88,135,.09);
+  --accent2:  #3E7C74;
+  --amber:  #9A6A15;
+  --green:  #2E7D52;
+  --red:    #B23A3A;
+  --red-d:  rgba(178,58,58,.08);
+  --text:   #1B1D1F;
+  --text2:  #55585C;
+  --text3:  #8B8E92;
+  --border:  rgba(24,26,28,.11);
+  --border2: rgba(24,26,28,.19);
+  --shadow:  0 1px 2px rgba(20,22,26,.04);
+  --hd-bg:  #FFFFFF;
+  --sidebar-bg: #FBFBFB;
+  --mono-bg: #F4F5F6;
+  --radius: 6px;
+}
+/* ── Tema: Escuro (near-black neutro) ───────────────────────────────────────── */
+html[data-theme="dark"] {
+  --bg0:    #0C0D0E;
+  --bg1:    #151719;
+  --bg2:    #1C1E21;
+  --bg3:    #262A2E;
+  --accent:   #6E9BD8;
+  --accent-d: rgba(110,155,216,.13);
+  --accent2:  #4FA394;
+  --amber:  #D2A24C;
+  --green:  #56B37E;
+  --red:    #D26B6B;
+  --red-d:  rgba(210,107,107,.13);
+  --text:   #E7E8EA;
+  --text2:  #9B9EA3;
+  --text3:  #63676C;
+  --border:  rgba(255,255,255,.09);
+  --border2: rgba(255,255,255,.16);
+  --shadow:  0 1px 2px rgba(0,0,0,.35);
+  --hd-bg:  #0F1113;
+  --sidebar-bg: #0F1113;
+  --mono-bg: #0E1012;
+  --radius: 6px;
+}
+
+/* ── Reset & base ───────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--bg0); color: var(--text);
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  font-size: 14px; -webkit-font-smoothing: antialiased;
+  display: grid; grid-template-rows: 52px 1fr; grid-template-columns: 230px 1fr;
+}
+button { cursor: pointer; font-family: inherit; border: none; background: none; color: inherit; }
+input, textarea, select { font-family: inherit; color: var(--text); background: transparent; }
+input[type=number]::-webkit-inner-spin-button { opacity: .4; }
+::placeholder { color: var(--text3); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 6px; border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--border2); background-clip: padding-box; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+header {
+  grid-column: 1/-1;
+  background: var(--hd-bg);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 14px; padding: 0 18px;
+  position: sticky; top: 0; z-index: 100;
+}
+.logo { display: flex; align-items: center; gap: 9px; }
+.logo-badge {
+  background: var(--text); color: var(--bg1); padding: 3px 7px; border-radius: 4px;
+  font-family: 'Fira Code', monospace; font-size: 11px; font-weight: 500; letter-spacing: .5px;
+}
+.logo-name {
+  font-family: 'Lora', Georgia, serif; font-size: 16px; font-weight: 600;
+  color: var(--text); letter-spacing: -.1px;
+}
+.logo-version {
+  font-family: 'Fira Code', monospace; font-size: 10px; color: var(--text3);
+  padding: 1px 5px; border: 1px solid var(--border); border-radius: 4px;
+}
+.pill {
+  padding: 4px 10px 4px 8px; border-radius: 5px; font-size: 11.5px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 6px; letter-spacing: .1px;
+  border: 1px solid transparent; transition: color .2s, background .2s;
+}
+.pill-idle    { background: var(--bg2); color: var(--text2); border-color: var(--border); }
+.pill-running { background: var(--accent-d); color: var(--accent); }
+.pill-done    { background: rgba(46,125,82,.10); color: var(--green); }
+.pill-error   { background: var(--red-d); color: var(--red); }
+.pill-running::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 1.6s infinite; }
+.hd-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.job-chip {
+  font-family: 'Fira Code', monospace; font-size: 11px; color: var(--text2);
+  background: var(--bg2); padding: 3px 9px; border-radius: 4px; border: 1px solid var(--border);
+}
+.theme-btn {
+  width: 32px; height: 32px; border-radius: var(--radius); border: 1px solid var(--border);
+  background: var(--bg1); color: var(--text2); font-size: 14px; transition: all .13s;
+  display: flex; align-items: center; justify-content: center;
+}
+.theme-btn:hover { background: var(--bg2); color: var(--text); border-color: var(--border2); }
+
+/* ── Sidebar ────────────────────────────────────────────────────────────────── */
+nav.sidebar {
+  grid-row: 2; background: var(--sidebar-bg); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; padding: 14px 0 10px; overflow-y: auto;
+}
+.nav-group-label {
+  padding: 14px 18px 6px; font-size: 10px; font-weight: 600; letter-spacing: .8px;
+  text-transform: uppercase; color: var(--text3); user-select: none;
+}
+.nav-links { display: flex; flex-direction: column; gap: 2px; padding: 0 10px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 11px;
+  border-radius: var(--radius); color: var(--text2); font-size: 13.5px; font-weight: 500;
+  transition: background .12s, color .12s; text-align: left; position: relative;
+}
+.nav-item svg { flex-shrink: 0; width: 16px; height: 16px; opacity: .7; }
+.nav-item:hover { background: var(--bg2); color: var(--text); }
+.nav-item:hover svg { opacity: 1; }
+.nav-item.active { background: var(--bg3); color: var(--text); font-weight: 600; }
+.nav-item.active svg { opacity: 1; color: var(--accent); }
+.nav-item.active::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; border-radius: 2px; background: var(--accent); }
+.sidebar-sep { margin: 12px 16px; border: none; border-top: 1px solid var(--border); }
+.sidebar-run { padding: 8px 12px 4px; margin-top: auto; }
+.btn-run {
+  width: 100%; padding: 10px; border-radius: var(--radius); font-size: 13.5px; font-weight: 600;
+  background: var(--accent); color: #fff; transition: filter .15s, background .15s; display: flex;
+  align-items: center; justify-content: center; gap: 8px; letter-spacing: .2px;
+}
+html[data-theme="dark"] .btn-run { color: #0C0D0E; }
+.btn-run:hover:not(:disabled) { filter: brightness(1.07); }
+.btn-run:disabled { opacity: .4; cursor: default; }
+.btn-run.running { background: var(--bg2); color: var(--text2); border: 1px solid var(--border); filter: none; }
+html[data-theme="dark"] .btn-run.running { color: var(--text2); }
+#sidebar-info { margin-top: 8px; font-size: 11px; color: var(--text3); text-align: center; line-height: 1.4; }
+
+/* ── Main / abas ────────────────────────────────────────────────────────────── */
+main { grid-row: 2; overflow-y: auto; background: var(--bg0); }
+.tab-pane { display: none; padding: 30px 40px 60px; max-width: 940px; margin: 0 auto; }
+.tab-pane.active { display: block; }
+.section-hd { margin-bottom: 26px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.section-hd h2 {
+  font-family: 'Lora', Georgia, serif; font-size: 21px; font-weight: 600;
+  letter-spacing: -.2px; margin-bottom: 5px;
+}
+.section-hd p { font-size: 13px; color: var(--text2); line-height: 1.55; max-width: 640px; }
+
+/* ── Seletor de modo ────────────────────────────────────── */
+.mode-bar { display: inline-flex; margin-bottom: 22px; border: 1px solid var(--border2); border-radius: var(--radius); overflow: hidden; background: var(--bg1); }
+.mode-btn {
+  padding: 7px 17px; border-right: 1px solid var(--border); color: var(--text2);
+  font-size: 12.5px; font-weight: 500; transition: background .12s, color .12s;
+}
+.mode-btn:last-child { border-right: none; }
+.mode-btn:hover { background: var(--bg2); color: var(--text); }
+.mode-btn.active { background: var(--accent-d); color: var(--accent); font-weight: 600; }
+
+/* ── Cartões de variante ────────────────────────────────────────────────────── */
+.variant-card {
+  background: var(--bg1); border: 1px solid var(--border); border-radius: 8px;
+  padding: 18px 20px; margin-bottom: 12px; transition: border-color .13s;
+}
+.variant-card:hover { border-color: var(--border2); }
+.vc-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+.vc-num {
+  font-family: 'Fira Code', monospace; font-size: 10px; color: var(--text2);
+  background: var(--bg3); padding: 3px 8px; border-radius: 4px; letter-spacing: .4px; flex-shrink: 0;
+}
+.vc-name {
+  flex: 1; background: var(--bg1); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 7px 11px; font-size: 13px; transition: border-color .13s;
+}
+.vc-name:focus { outline: none; border-color: var(--accent); }
+.btn-rm { width: 28px; height: 28px; border-radius: var(--radius); color: var(--text3); font-size: 15px; display: flex; align-items: center; justify-content: center; transition: all .13s; flex-shrink: 0; }
+.btn-rm:hover { background: var(--red-d); color: var(--red); }
+.seq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 640px) { .seq-grid { grid-template-columns: 1fr; } }
+.seq-label { font-size: 10.5px; font-weight: 600; color: var(--text2); letter-spacing: .4px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; margin-bottom: 7px; }
+.seq-tip { cursor: help; color: var(--text3); font-size: 12px; position: relative; border: 1px solid var(--border2); border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; }
+.seq-tip:hover::after { content: attr(data-tip); position: absolute; left: 0; top: 20px; background: var(--bg1); border: 1px solid var(--border2); padding: 9px 12px; border-radius: var(--radius); font-size: 11.5px; color: var(--text); white-space: normal; width: 260px; z-index: 30; line-height: 1.5; box-shadow: var(--shadow); font-weight: 400; text-transform: none; letter-spacing: 0; }
+.seq-ta { width: 100%; height: 90px; background: var(--mono-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 11px; font-family: 'Fira Code', monospace; font-size: 11.5px; line-height: 1.65; resize: vertical; transition: border-color .13s; }
+.seq-ta:focus { outline: none; border-color: var(--accent); }
+.seq-meta { display: flex; justify-content: flex-end; margin-top: 5px; }
+.seq-len { font-size: 10px; color: var(--text3); font-family: 'Fira Code', monospace; }
+.diff-bar { margin-top: 12px; padding: 8px 12px; border-radius: var(--radius); font-size: 12px; background: var(--bg2); border: 1px solid var(--border); color: var(--text2); display: none; align-items: center; gap: 8px; }
+.diff-bar.show { display: flex; }
+.diff-bar::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.diff-bar.ins { color: var(--green); } .diff-bar.ins::before { background: var(--green); }
+.diff-bar.del { color: var(--amber); } .diff-bar.del::before { background: var(--amber); }
+.diff-bar.err { color: var(--red); }   .diff-bar.err::before { background: var(--red); }
+.diff-bar code { font-family: 'Fira Code', monospace; background: var(--bg3); padding: 1px 5px; border-radius: 3px; font-size: 11px; color: var(--text); }
+.btn-add-v { display: flex; align-items: center; gap: 7px; padding: 10px 16px; border-radius: var(--radius); border: 1px dashed var(--border2); color: var(--text2); font-size: 13px; font-weight: 500; width: 100%; justify-content: center; transition: all .13s; margin-top: 4px; }
+.btn-add-v:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-d); border-style: solid; }
+
+/* ── Dropzone ───────────────────────────────────────────────────────────────── */
+.dropzone { border: 1px dashed var(--border2); border-radius: 8px; padding: 46px 24px; text-align: center; cursor: pointer; transition: all .16s; background: var(--bg1); }
+.dropzone:hover, .dropzone.drag-over { border-color: var(--accent); background: var(--accent-d); }
+.dz-icon { color: var(--text3); margin-bottom: 12px; display: flex; justify-content: center; }
+.dz-icon svg { width: 26px; height: 26px; }
+.dz-title { font-size: 14px; font-weight: 500; margin-bottom: 5px; }
+.dz-sub { font-size: 12px; color: var(--text2); margin-top: 3px; }
+.file-chip { display: flex; align-items: center; gap: 10px; padding: 11px 14px; margin-top: 12px; background: var(--bg1); border: 1px solid var(--border2); border-radius: var(--radius); font-size: 13px; }
+.file-chip svg { width: 16px; height: 16px; color: var(--text2); flex-shrink: 0; }
+.file-chip .fc-name { font-family: 'Fira Code', monospace; color: var(--text); font-size: 12px; }
+.file-chip .fc-size { color: var(--text3); font-size: 11px; margin-left: auto; }
+.btn-fc-rm { color: var(--text3); transition: color .13s; font-size: 14px; }
+.btn-fc-rm:hover { color: var(--red); }
+
+/* ── Configuração ───────────────────────────────────────────────────────────── */
+.cfg-group { background: var(--bg1); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+.cfg-title { padding: 11px 18px; font-size: 10.5px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--text2); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: var(--bg2); }
+.cfg-note { font-weight: 400; text-transform: none; font-size: 11px; color: var(--text3); letter-spacing: 0; padding: 2px 8px; background: var(--bg1); border: 1px solid var(--border); border-radius: 4px; }
+.cfg-body { padding: 16px 18px; }
+.cfg-row { display: flex; flex-wrap: wrap; gap: 16px; }
+.cfg-field { display: flex; flex-direction: column; gap: 6px; min-width: 120px; flex: 1; }
+.cfg-field.full { flex: 1 1 100%; }
+.cfg-field label { font-size: 11.5px; color: var(--text2); font-weight: 500; }
+.cfg-input { background: var(--bg1); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 11px; font-size: 13px; transition: border-color .13s; color: var(--text); }
+.cfg-input:focus { outline: none; border-color: var(--accent); }
+.cfg-input.mono { font-family: 'Fira Code', monospace; letter-spacing: 2px; }
+.cfg-hint { font-size: 11px; color: var(--amber); margin-top: 2px; }
+
+/* ── Resultados: ocioso ─────────────────────────────────────────────────────── */
+.idle-state { padding: 84px 0; text-align: center; }
+.idle-icon { color: var(--text3); opacity: .5; margin-bottom: 16px; display: flex; justify-content: center; }
+.idle-icon svg { width: 34px; height: 34px; }
+.idle-msg { font-size: 13.5px; color: var(--text2); line-height: 1.6; }
+.idle-msg strong { color: var(--text); font-weight: 600; }
+
+/* ── Log ────────────────────────────────────────────────────────────────────── */
+.log-wrap { background: var(--mono-bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.log-hd { padding: 9px 14px; font-size: 10.5px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; color: var(--text2); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; cursor: pointer; user-select: none; background: var(--bg2); }
+.log-hd:hover { color: var(--text); }
+.log-body { max-height: 280px; overflow-y: auto; padding: 12px 14px; font-family: 'Fira Code', monospace; font-size: 11.5px; line-height: 1.75; transition: max-height .2s; }
+.log-body.collapsed { max-height: 0; padding: 0 14px; overflow: hidden; }
+.ll { color: var(--text2); white-space: pre-wrap; word-break: break-all; }
+.ll-cmd   { color: var(--accent); }
+.ll-param { color: var(--accent2); }
+.ll-ok    { color: var(--green); }
+.ll-warn  { color: var(--amber); }
+.ll-err   { color: var(--red); }
+
+/* ── Resultados: concluído ──────────────────────────────────────────────────── */
+.done-hd { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.done-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.done-title svg { width: 17px; height: 17px; color: var(--green); flex-shrink: 0; }
+.done-jid { font-family: 'Fira Code', monospace; font-size: 11px; color: var(--text3); margin-top: 3px; margin-left: 25px; }
+.dl-row { display: flex; gap: 7px; flex-wrap: wrap; }
+.btn-dl { padding: 7px 13px; background: var(--bg1); border: 1px solid var(--border2); border-radius: var(--radius); color: var(--text); font-size: 12px; font-weight: 500; transition: all .13s; display: flex; align-items: center; gap: 5px; }
+.btn-dl:hover { border-color: var(--accent); color: var(--accent); }
+.stat-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+.stat-card { background: var(--bg1); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; min-width: 82px; text-align: left; flex: 1; }
+.stat-val { font-family: 'Fira Code', monospace; font-size: 25px; font-weight: 600; line-height: 1; margin-bottom: 6px; }
+.stat-lbl { font-size: 10px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--text3); }
+
+/* ── Tabela ─────────────────────────────────────────────────────────────────── */
+.tbl-controls { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.tbl-filter { flex: 1; background: var(--bg1); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; font-size: 13px; max-width: 320px; color: var(--text); }
+.tbl-filter:focus { outline: none; border-color: var(--accent); }
+.tbl-count { font-size: 12px; color: var(--text3); margin-left: auto; font-family: 'Fira Code', monospace; }
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--bg1); }
+.tbl-wrap.scroll-y { max-height: 470px; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead { position: sticky; top: 0; background: var(--bg2); z-index: 5; }
+th { padding: 10px 13px; text-align: left; color: var(--text2); font-size: 10px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; white-space: nowrap; cursor: pointer; user-select: none; border-bottom: 1px solid var(--border); transition: color .13s; }
+th:hover { color: var(--text); }
+th.sort-asc::after  { content: ' ↑'; color: var(--accent); font-size: 10px; }
+th.sort-desc::after { content: ' ↓'; color: var(--accent); font-size: 10px; }
+td { padding: 9px 13px; border-bottom: 1px solid var(--border); vertical-align: middle; white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+tr:last-child td { border-bottom: none; }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: var(--bg2); }
+.eff-cell { display: flex; align-items: center; gap: 9px; }
+.eff-val { font-family: 'Fira Code', monospace; font-size: 12px; font-weight: 600; min-width: 44px; }
+.eff-bar { height: 4px; border-radius: 2px; min-width: 2px; opacity: .85; }
+.badge { display: inline-flex; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: .2px; border: 1px solid transparent; }
+.b-pe2  { background: var(--accent-d); color: var(--accent); }
+.b-pe3  { background: rgba(154,106,21,.10); color: var(--amber); }
+.b-pe3b { background: rgba(46,125,82,.10); color: var(--green); }
+.b-yes  { background: rgba(46,125,82,.10); color: var(--green); }
+.b-no   { background: var(--bg3); color: var(--text3); }
+.seq-cell { font-family: 'Fira Code', monospace; font-size: 11px; }
+.na { color: var(--text3); }
+
+/* ── Fluxo de resultados em etapas ──────────────────────────────────────────── */
+.flow-hd { display: flex; align-items: baseline; gap: 10px; margin-bottom: 5px; }
+.flow-step-k { font-family: 'Fira Code', monospace; font-size: 10.5px; letter-spacing: .8px; text-transform: uppercase; color: var(--text3); font-weight: 500; }
+.flow-hd h3 { font-family: 'Lora', serif; font-size: 19px; font-weight: 600; color: var(--text); }
+.flow-sub { font-size: 13px; color: var(--text2); margin: 0 0 18px; max-width: 660px; line-height: 1.55; }
+
+.variant-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 8px; }
+.v-card { background: var(--bg1); border: 1px solid var(--border); border-radius: 8px; padding: 15px 16px; cursor: pointer; transition: border-color .13s; }
+.v-card:hover { border-color: var(--border2); }
+.v-card.active { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.v-card .vc-name { font-family: 'Fira Code', monospace; font-size: 12px; font-weight: 500; color: var(--text); word-break: break-all; margin-bottom: 6px; background: none; border: none; padding: 0; }
+.v-card .vc-meta { font-size: 11.5px; color: var(--text2); }
+.v-card .vc-badges { margin-top: 9px; display: flex; gap: 5px; flex-wrap: wrap; }
+
+.flow-track { display: flex; gap: 0; margin: 6px 0 20px; border-bottom: 1px solid var(--border); }
+.ftk-step { flex: 1; padding: 11px 8px; text-align: center; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; margin-bottom: -1px; }
+.ftk-step .ftk-k { display: block; font-family: 'Fira Code', monospace; font-size: 10px; color: var(--text3); letter-spacing: .8px; margin-bottom: 2px; }
+.ftk-step .ftk-l { font-size: 13px; font-weight: 500; color: var(--text2); }
+.ftk-step:hover .ftk-l { color: var(--text); }
+.ftk-step.active { border-bottom-color: var(--accent); }
+.ftk-step.active .ftk-l { color: var(--text); font-weight: 600; }
+.ftk-step.done .ftk-k::before { content: '✓ '; color: var(--green); }
+.ftk-step:not(.reachable) { opacity: .4; cursor: default; }
+
+.flow-ctx { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; gap: 26px; flex-wrap: wrap; font-size: 12px; align-items: center; }
+.flow-ctx .fx-i { display: flex; flex-direction: column; gap: 2px; }
+.flow-ctx .fx-k { font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--text3); }
+.flow-ctx .fx-v { font-weight: 600; color: var(--text); }
+.flow-ctx .fx-v.mono { font-family: 'Fira Code', monospace; font-weight: 400; }
+
+.flow-screen { display: none; }
+.flow-screen.on { display: block; animation: fadein .2s ease; }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+.flow-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; gap: 10px; }
+.flow-actions .btn-run { width: auto; padding: 9px 18px; }
+.btn-ghost-nav { background: transparent; border: 1px solid var(--border2); color: var(--text2); padding: 9px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; transition: all .13s; font-family: inherit; }
+.btn-ghost-nav:hover { color: var(--text); border-color: var(--border2); background: var(--bg2); }
+.flow-note { background: var(--bg2); border: 1px solid var(--border); border-left: 2px solid var(--amber); border-radius: 0 var(--radius) var(--radius) 0; padding: 11px 14px; font-size: 12.5px; color: var(--text2); margin-bottom: 16px; line-height: 1.5; }
+
+tr.row-sel td { background: var(--accent-d) !important; box-shadow: inset 2px 0 0 var(--accent); }
+.pick { width: 14px; height: 14px; border: 1.5px solid var(--border2); border-radius: 50%; display: inline-block; position: relative; }
+tr:hover .pick { border-color: var(--text3); }
+tr.row-sel .pick { border-color: var(--accent); }
+tr.row-sel .pick::after { content: ''; position: absolute; inset: 3px; background: var(--accent); border-radius: 50%; }
+
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 720px) { .summary-grid { grid-template-columns: 1fr; } }
+.sum-card { background: var(--bg1); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.sum-card h4 { background: var(--bg2); padding: 10px 15px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); font-weight: 600; border-bottom: 1px solid var(--border); }
+.sum-card.hero h4 { background: var(--accent-d); color: var(--accent); }
+.sum-big { padding: 18px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+.sum-big .n { font-family: 'Fira Code', monospace; font-size: 32px; font-weight: 600; color: var(--green); line-height: 1; }
+.sum-big .l { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--text3); margin-top: 6px; }
+.sum-kv { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 15px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.sum-kv:last-child { border-bottom: none; }
+.sum-kv .sk { color: var(--text2); font-weight: 500; }
+.sum-kv .sv { text-align: right; font-weight: 600; color: var(--text); }
+.sum-kv .sv.seq { font-family: 'Fira Code', monospace; font-weight: 400; font-size: 11px; }
+
+/* ── Erro ───────────────────────────────────────────────────────────────────── */
+.err-state { padding: 4px 0; }
+.err-banner { background: var(--red-d); border: 1px solid var(--red-d); border-left: 2px solid var(--red); border-radius: 0 8px 8px 0; padding: 16px 20px; display: flex; gap: 12px; align-items: flex-start; }
+.err-ico { color: var(--red); flex-shrink: 0; display: flex; margin-top: 1px; }
+.err-ico svg { width: 18px; height: 18px; }
+.err-title { font-size: 14px; font-weight: 600; color: var(--red); margin-bottom: 4px; }
+.err-msg { font-size: 13px; color: var(--text2); line-height: 1.55; }
+.err-hint { font-size: 12px; color: var(--text3); margin-top: 6px; }
+
+/* ── Tutorial ───────────────────────────────────────────────────────────────── */
+.tut-steps { display: flex; flex-direction: column; gap: 12px; }
+.tut-step {
+  display: flex; gap: 16px; padding: 20px 22px; background: var(--bg1); border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.tut-num {
+  width: 26px; height: 26px; border-radius: 50%; background: var(--bg3); color: var(--text);
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600;
+  flex-shrink: 0; margin-top: 1px; font-family: 'Fira Code', monospace;
+}
+.tut-body h3 { font-size: 14px; font-weight: 600; margin-bottom: 7px; }
+.tut-body p, .tut-body li { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.tut-body ul { padding-left: 18px; margin-top: 7px; display: flex; flex-direction: column; gap: 5px; }
+.tut-body strong { color: var(--text); font-weight: 600; }
+.tut-note {
+  margin-top: 12px; padding: 10px 13px; background: var(--bg2); border-radius: 0 var(--radius) var(--radius) 0;
+  border-left: 2px solid var(--accent2); font-size: 12px; color: var(--text2); line-height: 1.55;
+}
+.tut-body code {
+  font-family: 'Fira Code', monospace; background: var(--bg3); padding: 1px 5px;
+  border-radius: 3px; font-size: 11px; color: var(--accent2);
+}
+
+/* ── Informações ────────────────────────────────────────────────────────────── */
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+@media (max-width: 700px) { .info-grid { grid-template-columns: 1fr; } }
+.info-card { background: var(--bg1); border: 1px solid var(--border); border-radius: 8px; padding: 20px 22px; }
+.info-card.full { grid-column: span 2; }
+@media (max-width: 700px) { .info-card.full { grid-column: span 1; } }
+.info-card-icon { color: var(--text2); margin-bottom: 12px; display: flex; }
+.info-card-icon svg { width: 20px; height: 20px; }
+.info-card h3 { font-size: 13.5px; font-weight: 600; margin-bottom: 9px; color: var(--text); }
+.info-card p { font-size: 12.5px; color: var(--text2); line-height: 1.65; }
+.info-card p + p { margin-top: 8px; }
+.info-card ul { padding-left: 17px; display: flex; flex-direction: column; gap: 6px; margin-top: 7px; }
+.info-card li { font-size: 12.5px; color: var(--text2); line-height: 1.55; }
+.info-card em { color: var(--text); font-style: italic; }
+.file-item { padding: 11px 0; border-bottom: 1px solid var(--border); }
+.file-item:last-child { border-bottom: none; padding-bottom: 0; }
+.file-item:first-child { padding-top: 0; }
+.fn { font-family: 'Fira Code', monospace; font-size: 11px; color: var(--accent); font-weight: 500; display: block; margin-bottom: 4px; }
+.fd { font-size: 12px; color: var(--text2); line-height: 1.55; }
+.file-tag { display: inline-flex; font-family: 'Fira Code', monospace; font-size: 10px; background: var(--bg3); color: var(--text2); padding: 1px 7px; border-radius: 4px; margin-right: 4px; }
+.contact-list { list-style: none; padding: 0; margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.contact-list li { display: flex; gap: 8px; align-items: center; }
+.contact-list .ck { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--text3); min-width: 58px; }
+
+/* ── Histórico ──────────────────────────────────────────────────────────────── */
+.hist-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.hist-toolbar span { font-size: 12px; color: var(--text3); }
+.btn-txt { font-size: 12px; color: var(--text2); padding: 5px 11px; border-radius: var(--radius); border: 1px solid var(--border); transition: all .13s; }
+.btn-txt:hover { color: var(--red); border-color: var(--red); }
+.hist-empty { padding: 64px 0; text-align: center; color: var(--text3); font-size: 13px; line-height: 1.6; }
+.hist-empty svg { display: block; margin: 0 auto 12px; opacity: .35; width: 30px; height: 30px; }
+.hist-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  background: var(--bg1); border: 1px solid var(--border); border-radius: var(--radius);
+  margin-bottom: 8px; transition: border-color .13s;
+}
+.hist-item:hover { border-color: var(--border2); }
+.hist-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.hist-dot.done  { background: var(--green); }
+.hist-dot.error { background: var(--red); }
+.hist-dot.running { background: var(--accent); animation: pulse 1.6s infinite; }
+.hist-dot.pending { background: var(--text3); }
+.hist-jid { font-family: 'Fira Code', monospace; font-size: 11px; color: var(--text2); min-width: 68px; }
+.hist-meta { flex: 1; min-width: 0; }
+.hist-date { font-size: 12px; color: var(--text); }
+.hist-desc { font-size: 11px; color: var(--text3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-status-label { font-size: 11px; font-weight: 500; }
+.hist-status-label.done  { color: var(--green); }
+.hist-status-label.error { color: var(--red); }
+.hist-status-label.running { color: var(--accent); }
+.hist-status-label.pending { color: var(--text3); }
+.btn-hist-view { padding: 5px 11px; border-radius: var(--radius); font-size: 11px; font-weight: 500; border: 1px solid var(--border); color: var(--text2); transition: all .13s; flex-shrink: 0; }
+.btn-hist-view:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Toast ──────────────────────────────────────────────────────────────────── */
+#toasts { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 999; pointer-events: none; }
+.toast { padding: 11px 16px; border-radius: var(--radius); font-size: 13px; animation: toastIn .18s ease; max-width: 340px; pointer-events: auto; border: 1px solid var(--border2); background: var(--bg1); color: var(--text); box-shadow: var(--shadow); display: flex; align-items: center; gap: 8px; }
+.toast::before { content: ''; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.toast-err::before { background: var(--red); }
+.toast-ok::before  { background: var(--green); }
+
+/* ── Animações ──────────────────────────────────────────────────────────────── */
+@keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:.35} }
+@keyframes toastIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+@keyframes spinRing { to{transform:rotate(360deg)} }
+.spin { display:inline-block; width:11px; height:11px; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:spinRing .6s linear infinite; }
+html[data-theme="dark"] .spin { border-color: rgba(12,13,14,.35); border-top-color:#0C0D0E; }
+
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <span class="logo-badge">DTMP</span>
+    <span class="logo-name">Prime</span>
+    <span class="logo-version">v1.0</span>
+  </div>
+  <div id="status-pill" class="pill pill-idle">● Pronto</div>
+  <div class="hd-right">
+    <span id="job-chip" class="job-chip" style="display:none"></span>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Alternar tema">☾</button>
+  </div>
+</header>
+
+<!-- ── Sidebar ─────────────────────────────────────────────────────────────── -->
+<nav class="sidebar">
+  <div class="nav-group-label">Análise</div>
+  <div class="nav-links">
+    <button id="nav-input" class="nav-item active" onclick="switchTab('input')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v9M4 7l4 4 4-4M2 14h12"/></svg>
+      Entrada
+    </button>
+    <button id="nav-config" class="nav-item" onclick="switchTab('config')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="12" x2="14" y2="12"/><circle cx="5" cy="4" r="2" fill="var(--sidebar-bg)"/><circle cx="11" cy="12" r="2" fill="var(--sidebar-bg)"/></svg>
+      Configuração
+    </button>
+    <button id="nav-results" class="nav-item" onclick="switchTab('results')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="9" width="3" height="6" rx="1"/><rect x="6" y="5" width="3" height="10" rx="1"/><rect x="11" y="1" width="3" height="14" rx="1"/></svg>
+      Resultados
+    </button>
+  </div>
+  <hr class="sidebar-sep">
+  <div class="nav-group-label">Suporte</div>
+  <div class="nav-links">
+    <button id="nav-tutorial" class="nav-item" onclick="switchTab('tutorial')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 5.5v.01M8 7.5c0-.5.4-1 1-1.5s1-1.2 1-2a2 2 0 0 0-4 0"/><circle cx="8" cy="11.5" r=".5" fill="currentColor" stroke="none"/></svg>
+      Tutorial
+    </button>
+    <button id="nav-info" class="nav-item" onclick="switchTab('info')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="2" width="12" height="12" rx="2.5"/><line x1="8" y1="6" x2="8" y2="10.5"/><circle cx="8" cy="4.2" r=".6" fill="currentColor" stroke="none"/></svg>
+      Informações
+    </button>
+    <button id="nav-history" class="nav-item" onclick="switchTab('history')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><polyline points="8,5 8,8.5 10.5,10.5"/></svg>
+      Histórico
+    </button>
+  </div>
+  <hr class="sidebar-sep">
+  <div class="sidebar-run">
+    <button id="btn-run" class="btn-run" onclick="submitJob()">Executar</button>
+    <div id="sidebar-info"></div>
+  </div>
+</nav>
+
+<!-- ── Main ────────────────────────────────────────────────────────────────── -->
+<main>
+
+<!-- Tab: Entrada ─────────────────────────────────────────────────────────── -->
+<section id="tab-input" class="tab-pane active">
+  <div class="section-hd">
+    <h2>Entrada</h2>
+    <p>Defina as variantes genômicas para análise de eficiência de Prime Editing</p>
+  </div>
+
+  <div class="mode-bar">
+    <button class="mode-btn active" id="mode-manual" onclick="setMode('manual')">Sequências manuais</button>
+    <button class="mode-btn" id="mode-fasta" onclick="setMode('fasta')">Arquivo FASTA</button>
+  </div>
+
+  <div id="panel-manual">
+    <div id="variants-list"></div>
+    <button class="btn-add-v" onclick="addVariant()">＋ Adicionar variante</button>
+  </div>
+
+  <div id="panel-file" style="display:none">
+    <div class="dropzone" id="dropzone"
+         onclick="document.getElementById('file-input').click()"
+         ondragover="event.preventDefault();this.classList.add('drag-over')"
+         ondragleave="this.classList.remove('drag-over')"
+         ondrop="handleDrop(event)">
+      <div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></div>
+      <div class="dz-title">Arraste seu arquivo aqui</div>
+      <div class="dz-sub" id="dz-accept">Formatos aceitos: .fa / .fasta</div>
+      <div class="dz-sub" style="margin-top:5px;opacity:.6">ou clique para selecionar</div>
+    </div>
+    <input type="file" id="file-input" style="display:none" onchange="handleFile(this)">
+    <div id="file-chip-row" style="display:none" class="file-chip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
+      <span class="fc-name" id="fc-name"></span>
+      <span class="fc-size" id="fc-size"></span>
+      <button class="btn-fc-rm" onclick="clearFile()" title="Remover">✕</button>
+    </div>
+  </div>
+</section>
+
+<!-- Tab: Configuração ───────────────────────────────────────────────────── -->
+<section id="tab-config" class="tab-pane">
+  <div class="section-hd">
+    <h2>Configuração</h2>
+    <p>Parâmetros da pipeline — os valores padrão funcionam para a maioria dos casos de uso</p>
+  </div>
+
+  <div class="cfg-group">
+    <div class="cfg-title">PBS — Primer Binding Site</div>
+    <div class="cfg-body">
+      <div class="cfg-row">
+        <div class="cfg-field"><label>Comprimento mínimo (nt)</label><input id="c-pbs-min" type="number" value="10" min="5" max="20" class="cfg-input"></div>
+        <div class="cfg-field"><label>Comprimento máximo (nt)</label><input id="c-pbs-max" type="number" value="15" min="5" max="25" class="cfg-input"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cfg-group">
+    <div class="cfg-title">RTT — Reverse Transcriptase Template</div>
+    <div class="cfg-body">
+      <div class="cfg-row">
+        <div class="cfg-field"><label>Comprimento mínimo (nt)</label><input id="c-rtt-min" type="number" value="10" min="5" max="30" class="cfg-input"></div>
+        <div class="cfg-field"><label>Comprimento máximo (nt)</label><input id="c-rtt-max" type="number" value="20" min="10" max="50" class="cfg-input"></div>
+        <div class="cfg-field"><label>Dist. mín. do 5' do RTT</label><input id="c-rtt-d" type="number" value="5" min="0" max="20" class="cfg-input"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cfg-group">
+    <div class="cfg-title">sgRNA / ngRNA</div>
+    <div class="cfg-body">
+      <div class="cfg-row">
+        <div class="cfg-field"><label>Espaço de busca (bp)</label><input id="c-space" type="number" value="200" min="50" max="500" class="cfg-input"></div>
+        <div class="cfg-field"><label>Comprimento do sgRNA</label><input id="c-sgrna" type="number" value="20" min="17" max="24" class="cfg-input"></div>
+        <div class="cfg-field"><label>PAM</label><input id="c-pam" type="text" value="NGG" maxlength="6" class="cfg-input mono"></div>
+        <div class="cfg-field"><label>Offset do corte Cas9</label><input id="c-offset" type="number" value="-3" min="-5" max="0" class="cfg-input"></div>
+      </div>
+      <div class="cfg-row" style="margin-top:12px">
+        <div class="cfg-field"><label>Distância máxima do ngRNA (PE3)</label><input id="c-ngrna" type="number" value="100" min="10" max="300" class="cfg-input"></div>
+        <div class="cfg-field"><label>Dist. máx. mutação → sgRNA</label><input id="c-target" type="number" value="10" min="1" max="30" class="cfg-input"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cfg-group">
+    <div class="cfg-title">Execução</div>
+    <div class="cfg-body">
+      <div class="cfg-row">
+        <div class="cfg-field"><label>Jobs paralelos (n_jobs)</label><input id="c-jobs" type="number" value="4" min="1" max="64" class="cfg-input"></div>
+        <div class="cfg-field">
+          <label>Nível de debug</label>
+          <input id="c-debug" type="number" value="6" min="1" max="10" class="cfg-input">
+          <div class="cfg-hint">Manter ≥ 1 — o valor 0 desativa parâmetros internos.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Tab: Resultados ─────────────────────────────────────────────────────── -->
+<section id="tab-results" class="tab-pane">
+
+  <div id="r-idle" class="idle-state">
+    <div class="idle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6"/></svg></div>
+    <div class="idle-msg">Configure o input e clique em <strong>Executar</strong> para iniciar a análise</div>
+  </div>
+
+  <div id="r-running" style="display:none">
+    <div class="section-hd">
+      <h2>Executando</h2>
+      <p>Job <code id="r-jid" style="font-family:'Fira Code',monospace;font-size:12px"></code> · <span id="r-status-text">Inicializando pipeline...</span></p>
+    </div>
+    <div class="log-wrap">
+      <div class="log-hd" onclick="toggleLog()"><span>Log de execução</span><span id="log-toggle">▽</span></div>
+      <div class="log-body" id="log-body"><div id="log-lines"></div></div>
+    </div>
+  </div>
+
+  <div id="r-done" style="display:none">
+    <div class="done-hd">
+      <div>
+        <div class="done-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Análise concluída</div>
+        <div class="done-jid">Job <span id="done-jid"></span></div>
+      </div>
+      <div class="dl-row" id="dl-buttons"></div>
+    </div>
+    <div class="log-wrap" style="margin-bottom:22px">
+      <div class="log-hd" onclick="toggleLog()"><span>Log de execução</span><span id="log-toggle2">▽</span></div>
+      <div class="log-body collapsed" id="log-body2"><div id="log-lines2"></div></div>
+    </div>
+    <div class="stat-row" id="stat-row"></div>
+
+    <!-- ── Fluxo de resultados em etapas ── -->
+    <div id="flow-section">
+
+      <!-- Seletor de variante (aparece só com múltiplas variantes) -->
+      <div id="variant-selector" style="display:none">
+        <div class="flow-hd"><span class="flow-step-k">Variante</span><h3 id="vsel-title">Selecione a variante</h3></div>
+        <p class="flow-sub">A entrada gerou candidatos para múltiplas variantes. Escolha uma para explorar seus pegRNAs.</p>
+        <div class="variant-grid" id="variant-grid"></div>
+      </div>
+
+      <!-- Trilha de etapas -->
+      <div id="flow-steps" style="display:none">
+        <div class="flow-track" id="flow-track">
+          <div class="ftk-step active" data-fs="0" onclick="gotoFlow(0)"><span class="ftk-k">01</span><span class="ftk-l">pegRNA</span></div>
+          <div class="ftk-step" data-fs="1" onclick="gotoFlow(1)"><span class="ftk-k">02</span><span class="ftk-l">Nicking guide</span></div>
+          <div class="ftk-step" data-fs="2" onclick="gotoFlow(2)"><span class="ftk-k">03</span><span class="ftk-l">Resumo</span></div>
+        </div>
+
+        <!-- Contexto da variante ativa -->
+        <div class="flow-ctx" id="flow-ctx"></div>
+
+        <!-- Etapa 1: pegRNA -->
+        <div class="flow-screen on" id="fs-0">
+          <div class="flow-hd"><span class="flow-step-k">Etapa 01</span><h3>Candidatos de pegRNA</h3></div>
+          <p class="flow-sub">Ordenados por eficiência predita pelo modelo Transformer. Selecione um pegRNA para escolher seu nicking guide.</p>
+          <div class="tbl-controls">
+            <input type="text" class="tbl-filter" id="peg-filter" placeholder="Filtrar pegRNAs..." oninput="filterPegs()">
+            <span class="tbl-count" id="peg-count"></span>
+          </div>
+          <div class="tbl-wrap scroll-y"><table><thead id="peg-head"></thead><tbody id="peg-body"></tbody></table></div>
+          <div class="flow-actions"><span></span><button class="btn-run" id="peg-next" disabled onclick="gotoFlow(1)">Escolher nicking guide →</button></div>
+        </div>
+
+        <!-- Etapa 2: ngRNA -->
+        <div class="flow-screen" id="fs-1">
+          <div class="flow-hd"><span class="flow-step-k">Etapa 02</span><h3>Nicking guides</h3></div>
+          <p class="flow-sub">Guias de nicking do pegRNA selecionado. Esta etapa é opcional — sem nicking guide, o desenho opera em modo PE2.</p>
+          <div class="flow-note" id="pe2-note" style="display:none">O pegRNA selecionado não possui nicking guides na janela de busca — o desenho segue em modo <strong>PE2</strong>. Você pode ir direto ao resumo.</div>
+          <div class="tbl-wrap" id="ng-tbl-wrap"><table><thead id="ng-head"></thead><tbody id="ng-body"></tbody></table></div>
+          <div class="flow-actions"><button class="btn-ghost-nav" onclick="gotoFlow(0)">← pegRNA</button><button class="btn-run" onclick="gotoFlow(2)">Ver resumo →</button></div>
+        </div>
+
+        <!-- Etapa 3: Resumo -->
+        <div class="flow-screen" id="fs-2">
+          <div class="flow-hd"><span class="flow-step-k">Etapa 03</span><h3>Resumo do desenho</h3></div>
+          <p class="flow-sub">Consolidação do pegRNA e do nicking guide escolhidos.</p>
+          <div class="summary-grid" id="summary-grid"></div>
+          <div class="flow-actions"><button class="btn-ghost-nav" onclick="gotoFlow(1)">← nicking guide</button><span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="r-error" style="display:none">
+    <div class="section-hd"><h2>Erro de execução</h2></div>
+    <div class="log-wrap" style="margin-bottom:18px">
+      <div class="log-hd" onclick="toggleLog()"><span>Log de execução</span><span id="log-toggle3">▽</span></div>
+      <div class="log-body" id="log-body3"><div id="log-lines3"></div></div>
+    </div>
+    <div class="err-state">
+      <div class="err-banner">
+        <div class="err-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+        <div>
+          <div class="err-title">O pipeline encerrou com erro</div>
+          <div class="err-msg">Verifique o log acima para detalhes. Causas comuns: dependências não instaladas, configuração inválida ou sequências ref/alt inválidas.</div>
+          <div class="err-hint">Dica: certifique-se de que debug ≥ 1 para registrar mensagens de diagnóstico no log.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- Tab: Tutorial ───────────────────────────────────────────────────────── -->
+<section id="tab-tutorial" class="tab-pane">
+  <div class="section-hd">
+    <h2>Tutorial</h2>
+    <p>Guia passo a passo para utilizar o DTMP-Prime e obter os melhores resultados</p>
+  </div>
+
+  <div class="tut-steps">
+    <div class="tut-step">
+      <div class="tut-num">1</div>
+      <div class="tut-body">
+        <h3>Escolha o modo de entrada</h3>
+        <p>Na aba <strong>Entrada</strong>, selecione como deseja fornecer suas variantes genômicas. Dois modos estão disponíveis:</p>
+        <ul>
+          <li><strong>Sequências manuais</strong> — cole diretamente as sequências de referência e alternativa. Ideal para quem está testando variantes individuais.</li>
+          <li><strong>Arquivo FASTA</strong> — envie um <code>.fa</code> ou <code>.fasta</code> com pares nomeados <code>&gt;id_ref</code> / <code>&gt;id_alt</code>. Útil para análise em lote.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tut-step">
+      <div class="tut-num">2</div>
+      <div class="tut-body">
+        <h3>Prepare suas sequências (modo manual)</h3>
+        <p>Cada variante requer dois campos obrigatórios:</p>
+        <ul>
+          <li><strong>Sequência REF</strong> — fragmento genômico com o alelo de referência (wild-type). Inclua ao menos 50 pb de contexto em cada lado da posição-alvo.</li>
+          <li><strong>Sequência ALT</strong> — o mesmo fragmento, com a mutação desejada já incorporada (substituição, inserção ou deleção).</li>
+        </ul>
+        <div class="tut-note">Sequências na orientação 5'→3', aceitas apenas as bases canônicas A, T, C, G, que podem ser maiúsculas ou minúsculas.</div>
+      </div>
+    </div>
+
+    <div class="tut-step">
+      <div class="tut-num">3</div>
+      <div class="tut-body">
+        <h3>Ajuste os parâmetros (opcional)</h3>
+        <p>A aba <strong>Configuração</strong> expõe todos os parâmetros. Os padrões são adequados para SpCas9 + PE2:</p>
+        <ul>
+          <li><strong>PBS</strong>: comprimento do Primer Binding Site (padrão: 10–15 nt). PBS mais longos aumentam a estabilidade mas podem reduzir eficiência.</li>
+          <li><strong>RTT</strong>: comprimento do Reverse Transcriptase Template (padrão: 10–20 nt). Deve ser longo o suficiente para conter a edição.</li>
+          <li><strong>PAM</strong>: sequência PAM do nuclease (padrão: <code>NGG</code> para SpCas9).</li>
+          <li><strong>n_jobs</strong>: threads paralelas. Ajuste conforme as CPUs disponíveis no servidor.</li>
+        </ul>
+        <div class="tut-note">Para PE3/PE3b, verifique se a distância máxima do ngRNA é ampla o suficiente para encontrar um guia de nicking adequado na região.</div>
+      </div>
+    </div>
+
+    <div class="tut-step">
+      <div class="tut-num">4</div>
+      <div class="tut-body">
+        <h3>Execute a análise</h3>
+        <p>Clique em <strong>Executar</strong>. O pipeline irá automaticamente:</p>
+        <ul>
+          <li>Varrer a região em busca de sítios de corte compatíveis com o PAM configurado.</li>
+          <li>Projetar todos os pegRNAs candidatos (spacer, RTT, PBS, scaffold).</li>
+          <li>Puntuar cada candidato com o modelo DNABERT.</li>
+          <li>Ranquear os resultados por eficiência predita e identificar ngRNAs (PE3/PE3b).</li>
+        </ul>
+        <p style="margin-top:8px">O log de execução ficará disponível em <strong>Resultados</strong> em tempo real.</p>
+      </div>
+    </div>
+
+    <div class="tut-step">
+      <div class="tut-num">5</div>
+      <div class="tut-body">
+        <h3>Interprete os resultados</h3>
+        <p>A tabela exibe os pegRNAs candidatos ordenados por <strong>eficiência predita</strong>. Principais colunas:</p>
+        <ul>
+          <li><strong>predicted_efficiency</strong>: score DNABERT (0–1). Maior = melhor eficiência predita.</li>
+          <li><strong>PBS_GC / RTT_GC</strong>: conteúdo GC de cada componente. Faixa ideal: 40–60%.</li>
+          <li><strong>PE3b</strong>: o ngRNA corta apenas após a edição ser incorporada (mais seguro).</li>
+          <li><strong>dPAM</strong>: PAM duplo presente — pode aumentar off-targets. Preferir designs sem dPAM.</li>
+          <li><strong>nick_to_pegRNA</strong>: distância (bp) entre o nick do ngRNA e o sítio de edição.</li>
+        </ul>
+        <div class="tut-note">Use os botões de download para exportar os CSVs completos, incluindo sequências de clonagem e primers NGS.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Tab: Informações ────────────────────────────────────────────────────── -->
+<section id="tab-info" class="tab-pane">
+  <div class="section-hd">
+    <h2>Informações</h2>
+    <p>Sobre o projeto, arquivos gerados e como entrar em contato</p>
+  </div>
+
+  <div class="info-grid">
+
+    <div class="info-card full">
+      <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3c0 4 10 6 10 10s-10 4-10 8"/><path d="M17 3c0 4-10 6-10 10s10 4 10 8"/><path d="M8.5 7h7M8.5 17h7M9.5 10h5M9.5 14h5"/></svg></div>
+      <h3>Sobre o DTMP-Prime</h3>
+      <p>DTMP-Prime (<em>DNABERT-based Tool for Mutagenic Prime editing</em>) é uma pipeline computacional para o design automatizado e ranqueamento de pegRNAs para Prime Editing. O sistema integra o modelo de linguagem DNABERT — pré-treinado em sequências genômicas — com um módulo de design baseado em parâmetros bioquímicos configuráveis.</p>
+      <p>Dado um par de sequências (referência e editada), o pipeline gera um ranking de candidatos a pegRNA ordenados por eficiência predita, com informações completas de spacer, RTT, PBS, scaffold e ngRNA para estratégias PE2, PE3 e PE3b.</p>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/></svg></div>
+      <h3>Arquivos gerados</h3>
+      <div class="file-item">
+        <span class="fn">topX_pegRNAs.csv</span>
+        <span class="fd">Tabela principal com todos os pegRNAs candidatos, ranqueados por eficiência predita. Inclui spacer, RTT, PBS, scores e flags de qualidade.</span>
+      </div>
+      <div class="file-item">
+        <span class="fn">summary.csv</span>
+        <span class="fd">Sumário por variante: total de candidatos, distribuição PE2/PE3/PE3b, score médio e melhor design encontrado.</span>
+      </div>
+      <div class="file-item">
+        <span class="fn">rawX_pegRNAs.csv.gz</span>
+        <span class="fd">Tabela bruta de características de todos os pegRNAs candidatos, com as colunas de projeto legíveis — sequências, PBS/RTT, comprimentos, %GC, flags e distâncias — mais os componentes da representação de sequência e a eficiência predita.</span>
+      </div>
+      <div class="file-item">
+        <span class="fn">X_p_pegRNAs.csv.gz</span>
+        <span class="fd">Matriz de entrada já processada, apenas numérica, indexada pelo identificador de cada pegRNA: os componentes da representação de sequência e as features escalares consumidas pelo modelo, com a eficiência predita.</span>
+      </div>     
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.3" fill="var(--bg1)"/><circle cx="15" cy="17" r="2.3" fill="var(--bg1)"/></svg></div>
+      <h3>Formatos de entrada aceitos</h3>
+      <ul>
+        <li><span class="file-tag">.fa / .fasta</span> Pares ref/alt com sufixos <code>_ref</code> e <code>_alt</code> no cabeçalho FASTA.</li>
+        <li>Sequências manuais digitadas na interface (convertidas para FASTA internamente).</li>
+      </ul>
+      <p style="margin-top:10px;font-size:12px;color:var(--text3)">Sequências devem estar em 5'→3'. Apenas A, T, G, C são aceitos. Comprimento mínimo recomendado: 100 bp com contexto flanqueador.</p>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6A2 2 0 0 0 19 18l-5-9V3"/><path d="M7.5 14h9"/></svg></div>
+      <h3>Metodologia</h3>
+      <p>O pipeline opera em quatro etapas:</p>
+      <ul>
+        <li><strong>Identificação de PAM:</strong> varredura das sequências em busca de sítios de corte compatíveis.</li>
+        <li><strong>Design de pegRNA:</strong> enumeração de todas as combinações de PBS e RTT dentro dos comprimentos configurados.</li>
+        <li><strong>Scoring DNABERT:</strong> cada pegRNA é pontuado pelo modelo, que prediz eficiência com base na sequência completa.</li>
+        <li><strong>Seleção de ngRNA:</strong> para PE3/PE3b, guias de nicking são selecionados por proximidade e score DeepSpCas9.</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4a2 2 0 0 1 2-2h11v18H7a2 2 0 0 0-2 2Z"/><path d="M5 20a2 2 0 0 1 2-2h11"/></svg></div>
+      <h3>Referências</h3>
+      <ul>
+        <li>Alipanahi R., Safari L., Khanteymoori A. (2024). <em>DTMP-prime: A deep transformer-based model for predicting prime editing efficiency and PegRNA activity.</em> <a href="https://doi.org/10.1016/j.omtn.2024.102370" target="_blank">Molecular Therapy Nucleic Acids</a>.</li>
+        <li>Anzalone et al. (2019). <em>Search-and-replace genome editing without double-strand breaks or donor DNA.</em> <a href="https://doi.org/10.1038/s41586-019-1711-4" target="_blank">Nature</a>.</li>
+        <li>Ji et al. (2021). <em>DNABERT: pre-trained bidirectional encoder representations from transformers model for DNA-language in genome.</em> <a href="https://doi.org/10.1093/bioinformatics/btab083" target="_blank">Bioinformatics</a>.</li>
+        <li>Kim et al. (2019). <em>SpCas9 activity prediction by DeepSpCas9.</em> <a href="https://doi.org/10.1126/sciadv.aax9249" target="_blank">Science Advances</a>.</li>
+        <li>Sousa et al. (2024). <em>Systematic optimization of prime editing for the efficient functional correction of CFTR F508del in human airway epithelial cells.</em> <a href="https://doi.org/10.1038/s41551-024-01233-3" target="_blank">Nature</a>.</li>
+      </ul>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></div>
+      <h3>Contato & Suporte</h3>
+      <p>Em caso de dúvidas, bugs ou sugestões, abra uma <em>issue</em> no repositório ou entre em contato:</p>
+      <ul class="contact-list">
+        <li><span class="ck">Email</span><a href="mailto:">mateus25032@ilum.cnpem.br</a></li>
+        <li><span class="ck">GitHub</span><a href="https://github.com/mateusjmd/DTMP-Prime" target="_blank">github.com/mateusjmd/DTMP-Prime</a></li>
+      </ul>
+      <p style="margin-top:10px;font-size:11.5px;color:var(--text3)">Em caso de uso da ferramenta, cite o artigo original.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Tab: Histórico ──────────────────────────────────────────────────────── -->
+<section id="tab-history" class="tab-pane">
+  <div class="section-hd">
+    <h2>Histórico</h2>
+    <p>Registro das execuções realizadas neste navegador</p>
+  </div>
+  <div class="hist-toolbar">
+    <span id="hist-count-label"></span>
+    <button class="btn-txt" onclick="clearHistory()">Limpar histórico</button>
+  </div>
+  <div id="history-list"></div>
+</section>
+
+</main>
+
+<div id="toasts"></div>
+
+<script>
+/* ── State ────────────────────────────────────────────────────────────────── */
+const S = {
+  mode: 'manual',
+  variants: [{name:'',ref:'',alt:''}],
+  file: null,
+  jid: null,
+  logCount: 0,
+  poll: null,
+  allRows: [],
+  cols: [],
+  sortCol: null,
+  sortDir: 1,
+};
+
+/* ── DOM ──────────────────────────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+
+/* ── Theme ────────────────────────────────────────────────────────────────── */
+function toggleTheme() {
+  const html = document.documentElement;
+  const dark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', dark ? 'light' : 'dark');
+  $('theme-btn').textContent = dark ? '☾' : '☀';
+  localStorage.setItem('dtmp_theme', dark ? 'light' : 'dark');
+}
+(function initTheme() {
+  const t = localStorage.getItem('dtmp_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', t);
+  // btn not yet rendered; set after DOM
+  document.addEventListener('DOMContentLoaded', () => {
+    $('theme-btn').textContent = t === 'dark' ? '☀' : '☾';
+  });
+  // immediate if already loaded
+  if (document.readyState !== 'loading') {
+    $('theme-btn') && ($('theme-btn').textContent = t === 'dark' ? '☀' : '☾');
+  }
+})();
+
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+function switchTab(name) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const pane = $('tab-' + name);
+  if (pane) pane.classList.add('active');
+  const btn = $('nav-' + name);
+  if (btn) btn.classList.add('active');
+  if (name === 'history') renderHistory();
+}
+
+/* ── Mode ─────────────────────────────────────────────────────────────────── */
+function setMode(m) {
+  S.mode = m;
+  ['manual','fasta'].forEach(k => {
+    $('mode-' + k).classList.toggle('active', k === m);
+  });
+  $('panel-manual').style.display = m === 'manual' ? '' : 'none';
+  $('panel-file').style.display   = m !== 'manual' ? '' : 'none';
+  clearFile();
+}
+
+/* ── Variants ─────────────────────────────────────────────────────────────── */
+function addVariant() {
+  S.variants.push({name:'',ref:'',alt:''});
+  renderVariants();
+}
+
+function removeVariant(i) {
+  if (S.variants.length === 1) { toast('Mantenha ao menos uma variante.'); return; }
+  S.variants.splice(i, 1);
+  renderVariants();
+}
+
+function updateV(i, key, val) {
+  S.variants[i][key] = val;
+  if (key === 'ref' || key === 'alt') updateDiff(i);
+  if (key === 'ref') $('len-ref-' + i).textContent = val.length + ' bp';
+  if (key === 'alt') $('len-alt-' + i).textContent = val.length + ' bp';
+}
+
+function renderVariants() {
+  $('variants-list').innerHTML = S.variants.map((v, i) => `
+    <div class="variant-card" id="vc-${i}">
+      <div class="vc-header">
+        <span class="vc-num">VAR ${i+1}</span>
+        <input class="vc-name" type="text" placeholder="Nome (ex: CFTR_F508del)" value="${esc(v.name)}"
+               oninput="updateV(${i},'name',this.value)">
+        <button class="btn-rm" onclick="removeVariant(${i})" title="Remover">✕</button>
+      </div>
+      <div class="seq-grid">
+        <div>
+          <div class="seq-label">
+            Seq. Referência (ref)
+            <span class="seq-tip" data-tip="Sequência genômica com o alelo ORIGINAL. Mínimo 30 bp; ideal ≥ 200 bp centrado no sítio-alvo.">ⓘ</span>
+          </div>
+          <textarea class="seq-ta" placeholder="ATCGATCGATCG..." oninput="updateV(${i},'ref',this.value)">${esc(v.ref)}</textarea>
+          <div class="seq-meta"><span class="seq-len" id="len-ref-${i}">${v.ref.length} bp</span></div>
+        </div>
+        <div>
+          <div class="seq-label">
+            Seq. Editada (alt)
+            <span class="seq-tip" data-tip="Mesmo fragmento com a EDIÇÃO aplicada: substitua, insira ou delete nucleotídeos na posição-alvo.">ⓘ</span>
+          </div>
+          <textarea class="seq-ta" placeholder="ATCGATCGATCG..." oninput="updateV(${i},'alt',this.value)">${esc(v.alt)}</textarea>
+          <div class="seq-meta"><span class="seq-len" id="len-alt-${i}">${v.alt.length} bp</span></div>
+        </div>
+      </div>
+      <div class="diff-bar" id="diff-${i}"></div>
+    </div>
+  `).join('');
+  S.variants.forEach((_, i) => updateDiff(i));
+}
+
+function updateDiff(i) {
+  const v = S.variants[i], el = $('diff-' + i);
+  if (!el) return;
+  const d = seqDiff(v.ref, v.alt);
+  if (!d) { el.className = 'diff-bar'; el.innerHTML = ''; return; }
+  const {cls, html} = fmtDiff(d);
+  el.className = 'diff-bar show ' + cls;
+  el.innerHTML = html;
+}
+
+/* ── Seq diff ─────────────────────────────────────────────────────────────── */
+function seqDiff(ref, alt) {
+  ref = ref.trim(); alt = alt.trim();
+  if (!ref || !alt || ref === alt) return null;
+  let s = 0;
+  while (s < ref.length && s < alt.length && ref[s] === alt[s]) s++;
+  let e = 0;
+  while (e < ref.length - s && e < alt.length - s &&
+         ref[ref.length-1-e] === alt[alt.length-1-e]) e++;
+  const rM = ref.slice(s, e ? -e : ref.length);
+  const aM = alt.slice(s, e ? -e : alt.length);
+  if (!rM && !aM) return null;
+  if (!rM) return {type:'ins', pos:s, seq:aM};
+  if (!aM) return {type:'del', pos:s, seq:rM};
+  if (rM.length === aM.length) return {type:'sub', pos:s, ref:rM, alt:aM};
+  return {type:'complex', pos:s, ref:rM, alt:aM};
+}
+
+function fmtDiff(d) {
+  const c = s => `<code>${esc(s.length > 12 ? s.slice(0,12)+'…' : s)}</code>`;
+  switch (d.type) {
+    case 'sub':     return {cls:'',    html:`Substituição: ${c(d.ref)} → ${c(d.alt)} · posição ${d.pos+1}`};
+    case 'ins':     return {cls:'ins', html:`Inserção: +${c(d.seq)} (${d.seq.length} bp) · após pos. ${d.pos}`};
+    case 'del':     return {cls:'del', html:`Deleção: −${c(d.seq)} (${d.seq.length} bp) · pos. ${d.pos+1}`};
+    case 'complex': return {cls:'del', html:`Edição complexa: ${c(d.ref)} → ${c(d.alt)} · pos. ${d.pos+1}`};
+  }
+}
+
+/* ── Files ────────────────────────────────────────────────────────────────── */
+function handleFile(input) { if (input.files[0]) setFile(input.files[0]); }
+function handleDrop(e) {
+  e.preventDefault(); $('dropzone').classList.remove('drag-over');
+  const f = e.dataTransfer.files[0]; if (f) setFile(f);
+}
+function setFile(f) {
+  S.file = f;
+  $('file-chip-row').style.display = 'flex';
+  $('fc-name').textContent = f.name;
+  $('fc-size').textContent = fmtBytes(f.size);
+}
+function clearFile() {
+  S.file = null;
+  $('file-chip-row').style.display = 'none';
+  $('file-input').value = '';
+}
+function fmtBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+/* ── Config ───────────────────────────────────────────────────────────────── */
+function getConfig() {
+  return {
+    min_PBS_length:      $('c-pbs-min').value,
+    max_PBS_length:      $('c-pbs-max').value,
+    min_RTT_length:      $('c-rtt-min').value,
+    max_RTT_length:      $('c-rtt-max').value,
+    min_distance_RTT5:   $('c-rtt-d').value,
+    gRNA_search_space:   $('c-space').value,
+    sgRNA_length:        $('c-sgrna').value,
+    PAM:                 $('c-pam').value,
+    offset:              $('c-offset').value,
+    max_ngRNA_distance:  $('c-ngrna').value,
+    max_target_to_sgRNA: $('c-target').value,
+    n_jobs:              $('c-jobs').value,
+    debug:               $('c-debug').value,
+  };
+}
+
+/* ── Job submission ───────────────────────────────────────────────────────── */
+async function submitJob() {
+  const btn = $('btn-run');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Enviando…';
+
+  const fd = new FormData();
+  fd.append('mode', S.mode);
+  Object.entries(getConfig()).forEach(([k,v]) => fd.append(k, v));
+
+  if (S.mode === 'manual') {
+    fd.append('variants', JSON.stringify(S.variants));
+  } else {
+    if (!S.file) { toast('Selecione um arquivo antes de executar.'); resetRunBtn(); return; }
+    fd.append('file', S.file);
+  }
+
+  try {
+    const res = await fetch('/api/run', {method:'POST', body:fd});
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Erro ao iniciar job.'); resetRunBtn(); return; }
+    startJob(data.job_id);
+  } catch (e) {
+    toast('Erro de conexão com o servidor.'); resetRunBtn();
+  }
+}
+
+function startJob(jid) {
+  S.jid = jid; S.logCount = 0;
+  setStatus('running');
+  switchTab('results');
+  showResultState('running');
+  $('r-jid').textContent = jid;
+  $('done-jid').textContent = jid;
+  $('job-chip').textContent = 'Job #' + jid;
+  $('job-chip').style.display = '';
+  $('log-lines').innerHTML = '';
+  $('log-lines2').innerHTML = '';
+  $('log-lines3').innerHTML = '';
+  // Save to history as pending
+  saveHistory(jid, S.mode, 'running', S.mode === 'manual' ? S.variants.length + ' variante(s)' : (S.file ? S.file.name : ''));
+  S.poll = setInterval(() => pollJob(), 1500);
+}
+
+async function pollJob() {
+  try {
+    const r = await fetch(`/api/job/${S.jid}?since=${S.logCount}`);
+    if (!r.ok) return;
+    const d = await r.json();
+    appendLogs(d.logs, 'log-lines');
+    S.logCount = d.log_count;
+    $('r-status-text').textContent = statusText(d.status);
+    if (d.status === 'done')  { clearInterval(S.poll); onDone(d.files); }
+    if (d.status === 'error') { clearInterval(S.poll); onError(); }
+  } catch {}
+}
+
+function onDone(files) {
+  setStatus('done');
+  showResultState('done');
+  copyLog('log-lines', 'log-lines2');
+  renderDownloads(files);
+  resetRunBtn();
+  loadResults();
+  updateHistory(S.jid, 'done');
+}
+
+function onError() {
+  setStatus('error');
+  showResultState('error');
+  copyLog('log-lines', 'log-lines3');
+  resetRunBtn();
+  updateHistory(S.jid, 'error');
+}
+
+async function loadResults() {
+  try {
+    const r = await fetch('/api/results/' + S.jid);
+    const d = await r.json();
+    if (d.error) { toast('Erro ao carregar resultados: ' + d.error); return; }
+    if (d.summary) renderStats(d.summary);
+    initFlow(d);
+  } catch { toast('Erro ao buscar resultados.'); }
+}
+
+/* ── History ──────────────────────────────────────────────────────────────── */
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('dtmp_history') || '[]'); } catch { return []; }
+}
+
+function saveHistory(jid, mode, status, desc) {
+  const hist = getHistory();
+  // remove if exists
+  const idx = hist.findIndex(h => h.jid === jid);
+  if (idx > -1) hist.splice(idx, 1);
+  hist.unshift({ jid, mode, status, desc, date: new Date().toISOString() });
+  localStorage.setItem('dtmp_history', JSON.stringify(hist.slice(0, 30)));
+}
+
+function updateHistory(jid, status) {
+  const hist = getHistory();
+  const entry = hist.find(h => h.jid === jid);
+  if (entry) { entry.status = status; localStorage.setItem('dtmp_history', JSON.stringify(hist)); }
+}
+
+function clearHistory() {
+  if (!confirm('Limpar todo o histórico?')) return;
+  localStorage.removeItem('dtmp_history');
+  renderHistory();
+}
+
+function renderHistory() {
+  const hist = getHistory();
+  const container = $('history-list');
+  const label = $('hist-count-label');
+  if (label) label.textContent = hist.length ? `${hist.length} execução(ões) registrada(s)` : '';
+  if (!container) return;
+
+  if (!hist.length) {
+    container.innerHTML = `<div class="hist-empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="9"/><polyline points="12,7 12,12.5 15,15"/>
+      </svg>
+      Nenhuma execução registrada ainda.<br>Execute uma análise para ver o histórico.
+    </div>`;
+    return;
+  }
+
+  const modeLabel = {manual:'Manual', fasta:'FASTA', vcf:'VCF'};
+  const statusLabel = {done:'Concluído', error:'Erro', running:'Em execução', pending:'Aguardando'};
+
+  container.innerHTML = hist.map(h => {
+    const date = new Date(h.date).toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `
+      <div class="hist-item">
+        <div class="hist-dot ${h.status}"></div>
+        <span class="hist-jid">#${h.jid}</span>
+        <div class="hist-meta">
+          <div class="hist-date">${date}</div>
+          <div class="hist-desc">${modeLabel[h.mode] || h.mode}${h.desc ? ' · ' + esc(h.desc) : ''}</div>
+        </div>
+        <span class="hist-status-label ${h.status}">${statusLabel[h.status] || h.status}</span>
+        ${h.status === 'done' ? `<button class="btn-hist-view" onclick="viewHistJob('${h.jid}')">Ver</button>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function viewHistJob(jid) {
+  S.jid = jid;
+  switchTab('results');
+  $('done-jid').textContent = jid;
+  $('job-chip').textContent = 'Job #' + jid;
+  $('job-chip').style.display = '';
+  showResultState('done');
+  setStatus('done');
+  loadResults();
+}
+
+/* ── Log rendering ────────────────────────────────────────────────────────── */
+function appendLogs(logs, targetId) {
+  const el = $(targetId); if (!el) return;
+  logs.forEach(entry => {
+    const div = document.createElement('div');
+    div.className = 'll ' + llClass(entry.m);
+    div.textContent = entry.m;
+    el.appendChild(div);
+  });
+  const body = el.closest('.log-body');
+  if (body && !body.classList.contains('collapsed')) body.scrollTop = body.scrollHeight;
+}
+
+function llClass(m) {
+  if (/^\$/.test(m))               return 'll-cmd';
+  if (/---.*---/.test(m))          return 'll-param';
+  if (/\[Processo encerrado/.test(m) || /saved|Saved|Done/.test(m)) return 'll-ok';
+  if (/[Ee]rror|ERRO|Exception/.test(m)) return 'll-err';
+  if (/[Ww]arning/.test(m))        return 'll-warn';
+  return '';
+}
+
+function copyLog(fromId, toId) {
+  const from = $(fromId), to = $(toId);
+  if (from && to) to.innerHTML = from.innerHTML;
+}
+
+/* ── Downloads ────────────────────────────────────────────────────────────── */
+function renderDownloads(files) {
+  const knownDls = [
+    {pat:/top.*pegRNA.*\.csv$/i, label:'↓ Top pegRNAs'},
+    {pat:/summary.*\.csv$/i,     label:'↓ Sumário'},
+    {pat:/raw.*\.csv\.gz$/i,     label:'↓ Dados brutos'},
+    {pat:/\.csv\.gz$/i,          label:'↓ Features'},
+  ];
+  const used = new Set();
+  const btns = knownDls.map(({pat, label}) => {
+    const f = files.find(n => pat.test(n) && !used.has(n));
+    if (!f) return '';
+    used.add(f);
+    return `<button class="btn-dl" onclick="dlFile('${f}')">${label}</button>`;
+  });
+  $('dl-buttons').innerHTML = btns.join('') || '<span style="font-size:12px;color:var(--text2)">Nenhum arquivo encontrado</span>';
+}
+
+function dlFile(fname) {
+  window.location = `/api/download/${S.jid}/${encodeURIComponent(fname)}`;
+}
+
+/* ── Stats ────────────────────────────────────────────────────────────────── */
+function renderStats(summary) {
+  let total = 0, pe2 = 0, pe3 = 0, pe3b = 0, dpam = 0;
+  Object.values(summary).forEach(v => {
+    total++;
+    if (v.found_PE2)  pe2++;
+    if (v.found_PE3)  pe3++;
+    if (v.found_PE3b) pe3b++;
+    if (v.found_dPAM) dpam++;
+  });
+  const cards = [
+    {v: total, l:'Variantes',  c:'var(--text)'},
+    {v: pe2,   l:'Com PE2',    c:'var(--accent)'},
+    {v: pe3,   l:'Com PE3',    c:'var(--amber)'},
+    {v: pe3b,  l:'Com PE3b',   c:'var(--green)'},
+    {v: dpam,  l:'Com dPAM',   c:'var(--text2)'},
+  ];
+  $('stat-row').innerHTML = cards.map(c =>
+    `<div class="stat-card"><div class="stat-val" style="color:${c.c}">${c.v}</div><div class="stat-lbl">${c.l}</div></div>`
+  ).join('');
+}
+
+/* ── Fluxo de resultados (pegRNA → ngRNA → resumo) ───────────────────────────── */
+const PRIORITY = ['predicted_efficiency','pe_mode','sgRNA_seq','PBS_seq','RTT_seq','PBS_length','RTT_length','strand','is_PE3b','DeepSpCas9','sgRNA_distance_to_ngRNA','ngRNA_seq'];
+const COL_LABEL = {predicted_efficiency:'Eficiência',pe_mode:'Modo',sgRNA_seq:'Spacer',PBS_seq:'PBS',RTT_seq:'RTT',PBS_length:'PBS len',RTT_length:'RTT len',strand:'Fita',is_PE3b:'PE3b',DeepSpCas9:'DeepSpCas9',sgRNA_distance_to_ngRNA:'Pos. nick',ngRNA_seq:'Nicking spacer',pegRNA_extension:'Extensão 3\'',PBS_GC:'PBS GC%',RTT_GC:'RTT GC%',is_dPAM:'dPAM',target_to_sgRNA:'Alvo→sgRNA',target_to_RTT5:'Alvo→RTT5'};
+const SEQ_COLS  = new Set(['sgRNA_seq','PBS_seq','RTT_seq','pegRNA_extension','ngRNA_seq']);
+const GC_COLS   = new Set(['PBS_GC','RTT_GC']);
+const BOOL_COLS = new Set(['is_PE3b','is_dPAM']);
+
+// Colunas exibidas na tabela de pegRNA (enxuta, espírito PRIDICT)
+const PEG_COLS = ['predicted_efficiency','pe_mode','sgRNA_seq','PBS_seq','RTT_seq','PBS_length','RTT_length','strand'];
+// Colunas da tabela de nicking guide
+const NG_COLS  = ['ngRNA_seq','strand','sgRNA_distance_to_ngRNA','is_PE3b','DeepSpCas9'];
+const NG_LABEL = {ngRNA_seq:'Spacer',strand:'Fita',sgRNA_distance_to_ngRNA:'Pos. nick',is_PE3b:'PE3b',DeepSpCas9:'DeepSpCas9'};
+
+const F = { byVariant:{}, variants:[], curVar:null, pegRows:[], selPeg:null, selNg:null,
+            pegSortCol:'predicted_efficiency', pegSortDir:-1, ngList:[] };
+
+function hasNg(row) {
+  const s = row.ngRNA_seq;
+  return s !== null && s !== undefined && String(s).trim() !== '' && String(s).toLowerCase() !== 'nan';
+}
+function pegKey(row) {
+  // identifica um pegRNA único (spacer + extensão) para agrupar seus nicking guides
+  return (row.sgRNA_seq||'') + '|' + (row.pegRNA_extension||row.PBS_seq+''+row.RTT_seq||'');
+}
+
+function initFlow(d) {
+  // agrupa por variante (backend já envia by_variant quando há a coluna variant)
+  if (d.by_variant && d.variants && d.variants.length) {
+    F.byVariant = d.by_variant;
+    F.variants  = d.variants;
+  } else if (d.rows) {
+    F.byVariant = { '—': { count: d.rows.length, rows: d.rows } };
+    F.variants  = ['—'];
+  } else { return; }
+
+  if (F.variants.length > 1) {
+    renderVariantSelector();
+    $('variant-selector').style.display = '';
+    $('flow-steps').style.display = 'none';
+  } else {
+    $('variant-selector').style.display = 'none';
+    selectVariant(F.variants[0]);
+  }
+}
+
+function renderVariantSelector() {
+  $('vsel-title').textContent = `Selecione a variante (${F.variants.length})`;
+  $('variant-grid').innerHTML = F.variants.map(v => {
+    const g = F.byVariant[v];
+    const rows = g.rows;
+    const pe3 = rows.filter(r => hasNg(r)).length;
+    const best = rows.reduce((m,r)=>Math.max(m, parseFloat(r.predicted_efficiency)||0), 0);
+    const nPeg = new Set(rows.map(pegKey)).size;
+    return `<div class="v-card" onclick="selectVariant('${esc(v)}')">
+      <div class="vc-name">${esc(v)}</div>
+      <div class="vc-meta">${nPeg} pegRNA(s) · melhor eficiência ${best.toFixed(1)}%</div>
+      <div class="vc-badges">
+        <span class="badge b-pe2">${g.count} candidatos</span>
+        ${pe3 ? `<span class="badge b-pe3">${pe3} c/ nicking</span>` : `<span class="badge b-no">PE2</span>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectVariant(v) {
+  F.curVar = v;
+  F.pegRows = (F.byVariant[v] ? F.byVariant[v].rows : []).slice();
+  F.selPeg = null; F.selNg = null;
+  $('variant-selector').style.display = F.variants.length > 1 ? '' : 'none';
+  document.querySelectorAll('.v-card').forEach(c => c.classList.remove('active'));
+  if (F.variants.length > 1) {
+    const idx = F.variants.indexOf(v);
+    const card = document.querySelectorAll('.v-card')[idx];
+    if (card) card.classList.add('active');
+  }
+  $('flow-steps').style.display = '';
+  renderFlowCtx();
+  renderPegTable();
+  gotoFlow(0, true);
+}
+
+function renderFlowCtx() {
+  const rows = F.pegRows;
+  const nPeg = new Set(rows.map(pegKey)).size;
+  const best = rows.reduce((m,r)=>Math.max(m, parseFloat(r.predicted_efficiency)||0), 0);
+  $('flow-ctx').innerHTML = `
+    <div class="fx-i"><span class="fx-k">Variante</span><span class="fx-v mono">${esc(F.curVar)}</span></div>
+    <div class="fx-i"><span class="fx-k">pegRNAs candidatos</span><span class="fx-v">${nPeg}</span></div>
+    <div class="fx-i"><span class="fx-k">Melhor eficiência</span><span class="fx-v">${best.toFixed(1)}%</span></div>
+    ${F.variants.length > 1 ? `<div class="fx-i" style="margin-left:auto"><span class="fx-k">&nbsp;</span><button class="btn-ghost-nav" style="padding:5px 12px;font-size:12px" onclick="backToVariants()">↑ trocar variante</button></div>` : ''}
+  `;
+}
+function backToVariants() {
+  $('flow-steps').style.display = 'none';
+  $('variant-selector').style.display = '';
+  window.scrollTo({top: $('variant-selector').offsetTop - 80, behavior:'smooth'});
+}
+
+/* ── Etapa 1: tabela de pegRNA ── */
+function renderPegTable() {
+  const cols = PEG_COLS.filter(c => F.pegRows.some(r => r[c] !== undefined));
+  $('peg-head').innerHTML = `<tr><th style="width:34px"></th>${cols.map(c => `<th onclick="sortPeg('${c}')">${COL_LABEL[c]||c}</th>`).join('')}</tr>`;
+  drawPegRows(F.pegRows, cols);
+  $('peg-count').textContent = `${F.pegRows.length} candidatos`;
+}
+function drawPegRows(rows, cols) {
+  cols = cols || PEG_COLS.filter(c => F.pegRows.some(r => r[c] !== undefined));
+  const sorted = [...rows].sort((a,b) => {
+    const va=a[F.pegSortCol], vb=b[F.pegSortCol];
+    const na=parseFloat(va), nb=parseFloat(vb);
+    return (isNaN(na)||isNaN(nb) ? String(va).localeCompare(String(vb)) : na-nb) * F.pegSortDir;
+  });
+  $('peg-body').innerHTML = sorted.map((row,i) => {
+    const gi = F.pegRows.indexOf(row);
+    const sel = F.selPeg === gi ? ' row-sel' : '';
+    return `<tr class="${sel}" onclick="pickPeg(${gi})"><td><span class="pick"></span></td>${cols.map(c => renderCell(c, row[c], row)).join('')}</tr>`;
+  }).join('') || `<tr><td colspan="${cols.length+1}" style="text-align:center;padding:24px;color:var(--text2)">Nenhum pegRNA</td></tr>`;
+}
+function sortPeg(col) {
+  if (F.pegSortCol === col) F.pegSortDir *= -1; else { F.pegSortCol = col; F.pegSortDir = (col==='predicted_efficiency'?-1:1); }
+  const cols = PEG_COLS.filter(c => F.pegRows.some(r => r[c] !== undefined));
+  document.querySelectorAll('#peg-head th').forEach((th,i) => {
+    if (i===0) return;
+    th.className = cols[i-1]===col ? (F.pegSortDir===1?'sort-asc':'sort-desc') : '';
+  });
+  drawPegRows(F.pegRows, cols);
+}
+function filterPegs() {
+  const q = $('peg-filter').value.toLowerCase();
+  const rows = !q ? F.pegRows : F.pegRows.filter(r => Object.values(r).some(v => v!=null && String(v).toLowerCase().includes(q)));
+  drawPegRows(rows);
+  $('peg-count').textContent = `${rows.length} de ${F.pegRows.length} candidatos`;
+}
+function pickPeg(gi) {
+  F.selPeg = gi; F.selNg = null;
+  renderPegTable();
+  $('peg-next').disabled = false;
+  // monta lista de nicking guides deste pegRNA
+  const chosen = F.pegRows[gi];
+  const key = pegKey(chosen);
+  F.ngList = F.pegRows.filter(r => pegKey(r)===key && hasNg(r));
+}
+
+/* ── Etapa 2: tabela de nicking guide ── */
+function renderNgTable() {
+  const list = F.ngList;
+  const note = $('pe2-note'), wrap = $('ng-tbl-wrap');
+  if (!list.length) { note.style.display=''; wrap.style.display='none'; return; }
+  note.style.display='none'; wrap.style.display='';
+  $('ng-head').innerHTML = `<tr><th style="width:34px"></th>${NG_COLS.map(c => `<th>${NG_LABEL[c]||c}</th>`).join('')}</tr>`;
+  const sorted = [...list].sort((a,b) => (parseFloat(b.DeepSpCas9)||0)-(parseFloat(a.DeepSpCas9)||0));
+  $('ng-body').innerHTML = sorted.map(row => {
+    const gi = F.pegRows.indexOf(row);
+    const sel = F.selNg === gi ? ' row-sel' : '';
+    return `<tr class="${sel}" onclick="pickNg(${gi})"><td><span class="pick"></span></td>${NG_COLS.map(c => renderCell(c, row[c], row)).join('')}</tr>`;
+  }).join('');
+}
+function pickNg(gi) { F.selNg = gi; renderNgTable(); }
+
+/* ── Etapa 3: resumo ── */
+function renderSummary() {
+  const p = F.pegRows[F.selPeg];
+  if (!p) return;
+  const n = (F.selNg !== null) ? F.pegRows[F.selNg] : null;
+  const mode = !n ? {t:'PE2',c:'b-pe2'} : (isTrue(n.is_PE3b) ? {t:'PE3b',c:'b-pe3b'} : {t:'PE3',c:'b-pe3'});
+  const eff = parseFloat(p.predicted_efficiency);
+  const seq = s => s ? colorSeq(String(s), 60) : '<span class="na">—</span>';
+  const ngBlock = n ? `
+      <div class="sum-kv"><span class="sk">Spacer</span><span class="sv seq">${seq(n.ngRNA_seq)}</span></div>
+      <div class="sum-kv"><span class="sk">Fita-alvo</span><span class="sv">${badgeStrand(n.strand)}</span></div>
+      <div class="sum-kv"><span class="sk">Posição do nick</span><span class="sv" style="font-family:'Fira Code',monospace">${n.sgRNA_distance_to_ngRNA ?? '—'}</span></div>
+      <div class="sum-kv"><span class="sk">PE3b</span><span class="sv">${isTrue(n.is_PE3b)?'Sim':'Não'}</span></div>
+      <div class="sum-kv"><span class="sk">DeepSpCas9</span><span class="sv">${fmtNum(n.DeepSpCas9)}</span></div>`
+    : `<div class="sum-kv"><span class="sk" style="color:var(--text3)">Modo PE2 — sem nicking guide</span><span class="sv"></span></div>`;
+
+  $('summary-grid').innerHTML = `
+    <div>
+      <div class="sum-card hero">
+        <h4>pegRNA selecionado</h4>
+        <div class="sum-big"><div class="n">${isNaN(eff)?'—':eff.toFixed(1)+'%'}</div><div class="l">Eficiência predita · DTMP-Prime</div></div>
+        <div class="sum-kv"><span class="sk">Modo</span><span class="sv"><span class="badge ${mode.c}">${mode.t}</span></span></div>
+        <div class="sum-kv"><span class="sk">Spacer</span><span class="sv seq">${seq(p.sgRNA_seq)}</span></div>
+        <div class="sum-kv"><span class="sk">PBS</span><span class="sv seq">${seq(p.PBS_seq)}</span></div>
+        <div class="sum-kv"><span class="sk">RTT</span><span class="sv seq">${seq(p.RTT_seq)}</span></div>
+        <div class="sum-kv"><span class="sk">Extensão 3' (PBS+RTT)</span><span class="sv seq">${seq(p.pegRNA_extension)}</span></div>
+        <div class="sum-kv"><span class="sk">Fita-alvo</span><span class="sv">${badgeStrand(p.strand)}</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="sum-card"><h4>Nicking guide</h4>${ngBlock}</div>
+      <div class="sum-card" style="margin-top:18px"><h4>Parâmetros do pegRNA</h4>
+        <div class="sum-kv"><span class="sk">PBS · comp. / GC</span><span class="sv">${p.PBS_length ?? '—'} nt · ${fmtGc(p.PBS_GC)}</span></div>
+        <div class="sum-kv"><span class="sk">RTT · comp. / GC</span><span class="sv">${p.RTT_length ?? '—'} nt · ${fmtGc(p.RTT_GC)}</span></div>
+        <div class="sum-kv"><span class="sk">DeepSpCas9 (pegRNA)</span><span class="sv">${fmtNum(p.DeepSpCas9)}</span></div>
+      </div>
+    </div>`;
+}
+function badgeStrand(s){ const v=String(s); const cls = (v==='+'||v.toLowerCase()==='fw')?'b-pe2':'b-pe3b'; return `<span class="badge ${cls}">${v}</span>`; }
+function isTrue(v){ return v===1||v===true||v==='True'||v==='1'||v===1.0; }
+function fmtNum(v){ const n=parseFloat(v); return isNaN(n)?'—':n.toFixed(2); }
+function fmtGc(v){ const n=parseFloat(v); return isNaN(n)?'—':n.toFixed(1)+'% GC'; }
+
+/* ── Navegação entre etapas ── */
+function gotoFlow(s, silent) {
+  if (s>0 && F.selPeg===null) { if(!silent) toast('Selecione um pegRNA primeiro.'); return; }
+  [0,1,2].forEach(i => $('fs-'+i).classList.toggle('on', i===s));
+  document.querySelectorAll('.ftk-step').forEach((el,i) => {
+    el.classList.toggle('active', i===s);
+    el.classList.toggle('done', i<s);
+    el.classList.toggle('reachable', i===0 || F.selPeg!==null);
+  });
+  if (s===1) renderNgTable();
+  if (s===2) renderSummary();
+  if (!silent) window.scrollTo({top: $('flow-track').offsetTop - 80, behavior:'smooth'});
+}
+
+function renderCell(col, val, row) {
+  if (val === null || val === undefined || val === '') return `<td><span class="na">—</span></td>`;
+  if (col === 'predicted_efficiency') {
+    const v = parseFloat(val);
+    const disp = isNaN(v) ? val : v.toFixed(1) + '%';
+    const color = isNaN(v) ? 'var(--text2)' : (v >= 20 ? 'var(--green)' : v >= 10 ? 'var(--amber)' : 'var(--red)');
+    const w = isNaN(v) ? 0 : Math.max(2, Math.min(64, Math.round(v * 2)));
+    return `<td><div class="eff-cell"><span class="eff-val" style="color:${color}">${disp}</span><div class="eff-bar" style="width:${w}px;background:${color}"></div></div></td>`;
+  }
+  if (col === 'pe_mode') {
+    const m = String(val);
+    const cls = m === 'PE2' ? 'b-pe2' : m === 'PE3b' ? 'b-pe3b' : 'b-pe3';
+    return `<td><span class="badge ${cls}">${m}</span></td>`;
+  }
+  if (col === 'strand') return `<td>${badgeStrand(val)}</td>`;
+  if (SEQ_COLS.has(col))  return `<td class="seq-cell">${colorSeq(String(val), 24)}</td>`;
+  if (GC_COLS.has(col))   return `<td>${parseFloat(val).toFixed(1)}%</td>`;
+  if (BOOL_COLS.has(col)) {
+    const yes = isTrue(val);
+    return `<td>${yes ? '<span class="badge b-yes">✓</span>' : '<span class="badge b-no">—</span>'}</td>`;
+  }
+  if (col === 'sgRNA_distance_to_ngRNA') {
+    const n = parseInt(val);
+    return `<td>${isNaN(n) ? `<span class="na">—</span>` : `<span style="font-family:'Fira Code',monospace">${n}</span>`}</td>`;
+  }
+  if (typeof val === 'number') return `<td>${Number.isInteger(val) ? val : val.toFixed(3)}</td>`;
+  return `<td title="${esc(String(val))}">${esc(String(val))}</td>`;
+}
+
+function colorSeq(seq, max) {
+  // Estética sóbria: monoespaçada, sem diferenciação de cor por base.
+  const s = seq.length > max ? seq.slice(0, max) : seq;
+  const more = seq.length > max ? `<span style="color:var(--text3);font-size:10px"> +${seq.length-max}</span>` : '';
+  return `<span style="color:var(--text)">${s}</span>` + more;
+}
+
+/* ── UI helpers ───────────────────────────────────────────────────────────── */
+function setStatus(s) {
+  const el = $('status-pill');
+  const map = {idle:'pill-idle ● Pronto', running:'pill-running ⬤ Executando', done:'pill-done ✓ Concluído', error:'pill-error ⚠ Erro'};
+  const parts = map[s].split(' ');
+  el.className = 'pill ' + parts[0];
+  el.textContent = parts.slice(1).join(' ');
+  $('btn-run').disabled = s === 'running';
+  $('btn-run').className = 'btn-run' + (s === 'running' ? ' running' : '');
+  if (s !== 'running') $('btn-run').innerHTML = 'Executar';
+}
+
+function statusText(s) {
+  return {pending:'Aguardando início...', running:'Pipeline em execução...', done:'Concluído.', error:'Encerrado com erro.'}[s] || s;
+}
+
+function showResultState(s) {
+  ['idle','running','done','error'].forEach(k => $('r-'+k).style.display = k === s ? '' : 'none');
+}
+
+function resetRunBtn() {
+  $('btn-run').disabled = false;
+  $('btn-run').className = 'btn-run';
+  $('btn-run').innerHTML = 'Executar';
+}
+
+function toggleLog() {
+  ['log-body','log-body2','log-body3'].forEach(id => {
+    const el = $(id); if (el) el.classList.toggle('collapsed');
+  });
+  ['log-toggle','log-toggle2','log-toggle3'].forEach(id => {
+    const el = $(id); if (el) el.textContent = el.textContent === '▽' ? '△' : '▽';
+  });
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg, type='err') {
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.textContent = msg;
+  $('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 4500);
+}
+
+/* ── Init ─────────────────────────────────────────────────────────────────── */
+renderVariants();
+renderHistory();
+// Apply saved theme icon
+(function() {
+  const t = localStorage.getItem('dtmp_theme') || 'light';
+  const btn = $('theme-btn');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+})();
+</script>
+</body>
+</html>

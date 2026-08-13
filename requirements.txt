@@ -1,0 +1,24 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# DTMP-Prime — Dependências de PRODUÇÃO
+#
+# Instala apenas o necessário para desenhar e pontuar pegRNAs a partir de uma
+# sequência-alvo, usando um modelo já treinado.
+#
+#   pip install -r requirements.txt
+#
+# Para treinar, validar ou reproduzir as fases do projeto, use:
+#   pip install -r requirements-dev.txt
+# ─────────────────────────────────────────────────────────────────────────────
+
+numpy==1.26.4
+pandas==2.3.3
+biopython==1.85
+ViennaRNA==2.7.2
+scikit-bio==0.7.0
+torch==2.7.1
+PyYAML==6.0.3
+joblib==1.5.3
+mechanize==0.4.10
+Flask==3.1.3
+Werkzeug==3.1.8
+genet==0.17.2

@@ -1,0 +1,50 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# DTMP-Prime — Dependências de DESENVOLVIMENTO
+#
+# Para treinar modelos, executar os protocolos de validação, reproduzir as
+# fases da reconstrução ou desenvolver o projeto localmente.
+#
+#   pip install -r requirements-dev.txt
+#
+# Inclui tudo de requirements.txt (produção) além das ferramentas de treino,
+# validação e análise.
+# ─────────────────────────────────────────────────────────────────────────────
+
+-r requirements.txt
+
+scikit-learn==1.6.1
+scipy==1.13.1
+tqdm==4.67.3
+xgboost==2.1.4
+openpyxl==3.1.5
+statsmodels==0.14.6
+pytest==8.3.4
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FASE 4 — DNABERT  ⚠️  AMBIENTE SEPARADO OBRIGATÓRIO
+#
+# O DNABERT distribui sua PRÓPRIA versão modificada da biblioteca
+# `transformers` (2.5.0), incompatível com as versões modernas (4.x/5.x).
+# Instalá-la aqui QUEBRARIA qualquer outro uso de transformers no ambiente.
+#
+# Portanto, a Fase 4 NÃO é coberta por este arquivo. Para reproduzi-la, crie
+# um ambiente isolado:
+#
+#     conda create -n dnabert python=3.9 -y
+#     conda activate dnabert
+#     git clone https://github.com/jerryji1993/DNABERT
+#     cd DNABERT && pip install --editable .        # instala transformers 2.5
+#     pip install -r requirements.txt               # deps de produção
+#
+# Os pesos DNA_bert_6 vêm por Git LFS (~400 MB); um `git clone` comum baixa
+# apenas um ponteiro de 134 bytes. Após clonar:
+#
+#     git lfs install && git lfs pull
+#     ls -la DNA_bert_6/pytorch_model.bin           # deve ter ~400 MB
+#
+# Particularidades da API 2.5 (já tratadas no código):
+#   • tokenização via batch_encode_plus (o tokenizer não é chamável)
+#   • saída do modelo é TUPLA — o hidden state é out[0], não out.last_hidden_state
+#
+# Ver dnabert/README.md para o procedimento completo.
+# ─────────────────────────────────────────────────────────────────────────────
