@@ -349,7 +349,7 @@ triagem experimental, não de seleção de candidato único.
 Alipanahi, R.; Safari, L.; Khanteymoori, A. DTMP-Prime: A deep transformer-based
 model for predicting prime editing efficiency and PegRNA activity.
 *Molecular Therapy Nucleic Acids*, v. 35, n. 3, 2024.
-[doi:10.1016/j.omtn.2024.102263](https://doi.org/10.1016/j.omtn.2024.102263).
+[doi:10.1016/j.omtn.2024.102263](https://doi.org/10.1016/j.omtn.2024.102370).
 
 * **Validação externa:**
 Sousa, A. A. *et al.* Systematic optimization of prime editing for the efficient
