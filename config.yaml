@@ -34,7 +34,7 @@ PAM: NGG
 use_transformer: true
 
 # ---------- MODELO DE PRODUÇÃO (Fase 2a, 14 features) ----------
-transformer_model: fase2a_model.pt
+transformer_model: phase2a_model.pt
 use_encoding: false
 feature_norm_path: feature_norm.npz
 
